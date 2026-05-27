@@ -1,0 +1,19 @@
+# Modern Deep Learning bağımlılıkları (opsiyonel)
+# Bu dosyayı yalnızca SAM 2 veya CellPose kullanmak istiyorsanız yükleyin.
+# Boyut: ~500MB - 2GB (PyTorch dahil)
+# 
+# Kurulum:
+#   pip install -r requirements-modern.txt
+#
+# CPU-only PyTorch için (daha küçük):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
+# SAM 2 — Segment Anything Model 2 (Meta, 2024)
+ultralytics>=8.3.0
+
+# CellPose 3 — Pretrained cellular segmenter
+cellpose>=3.0
+
+# PyTorch (yukarıdakiler bunu zaten çekecek, ama açıkça belirtmek için)
+torch>=2.0
+torchvision>=0.15

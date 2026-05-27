@@ -1,0 +1,82 @@
+{
+  "stone_code": "KT",
+  "stone_name": "Karaman Light Travertine",
+  "n_clusters": 7,
+  "colors": [
+    {
+      "rgb": [
+        27,
+        26,
+        19
+      ],
+      "hex": "#1b1a13",
+      "fraction_pct": 1.56,
+      "brightness": 24.0
+    },
+    {
+      "rgb": [
+        81,
+        70,
+        52
+      ],
+      "hex": "#514634",
+      "fraction_pct": 3.13,
+      "brightness": 67.66666666666667
+    },
+    {
+      "rgb": [
+        142,
+        120,
+        91
+      ],
+      "hex": "#8e785b",
+      "fraction_pct": 9.38,
+      "brightness": 117.66666666666667
+    },
+    {
+      "rgb": [
+        185,
+        149,
+        102
+      ],
+      "hex": "#b99566",
+      "fraction_pct": 17.19,
+      "brightness": 145.33333333333334
+    },
+    {
+      "rgb": [
+        193,
+        170,
+        140
+      ],
+      "hex": "#c1aa8c",
+      "fraction_pct": 9.38,
+      "brightness": 167.66666666666666
+    },
+    {
+      "rgb": [
+        213,
+        179,
+        134
+      ],
+      "hex": "#d5b386",
+      "fraction_pct": 28.13,
+      "brightness": 175.33333333333334
+    },
+    {
+      "rgb": [
+        233,
+        202,
+        162
+      ],
+      "hex": "#e9caa2",
+      "fraction_pct": 31.25,
+      "brightness": 199.0
+    }
+  ],
+  "source": "imagecolorpicker-style K-means analysis (colors.xlsx)",
+  "pore_candidate_indices": [
+    0,
+    1
+  ]
+}

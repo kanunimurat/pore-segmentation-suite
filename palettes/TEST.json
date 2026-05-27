@@ -1,0 +1,41 @@
+{
+  "stone_code": "TEST",
+  "stone_name": "Test palette",
+  "n_clusters": 3,
+  "colors": [
+    {
+      "rgb": [
+        20,
+        20,
+        20
+      ],
+      "hex": "#141414",
+      "fraction_pct": 5,
+      "brightness": 20
+    },
+    {
+      "rgb": [
+        120,
+        80,
+        60
+      ],
+      "hex": "#785040",
+      "fraction_pct": 30,
+      "brightness": 86
+    },
+    {
+      "rgb": [
+        220,
+        200,
+        180
+      ],
+      "hex": "#dcc8b4",
+      "fraction_pct": 65,
+      "brightness": 200
+    }
+  ],
+  "pore_candidate_indices": [
+    0
+  ],
+  "source": "test"
+}

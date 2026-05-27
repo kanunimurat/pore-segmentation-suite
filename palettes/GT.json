@@ -1,0 +1,82 @@
+{
+  "stone_code": "GT",
+  "stone_name": "Emirdağ Silver Travertine",
+  "n_clusters": 7,
+  "colors": [
+    {
+      "rgb": [
+        87,
+        85,
+        75
+      ],
+      "hex": "#57554b",
+      "fraction_pct": 10.94,
+      "brightness": 82.33333333333333
+    },
+    {
+      "rgb": [
+        137,
+        118,
+        97
+      ],
+      "hex": "#897661",
+      "fraction_pct": 7.81,
+      "brightness": 117.33333333333333
+    },
+    {
+      "rgb": [
+        129,
+        124,
+        115
+      ],
+      "hex": "#817c73",
+      "fraction_pct": 9.38,
+      "brightness": 122.66666666666667
+    },
+    {
+      "rgb": [
+        165,
+        156,
+        144
+      ],
+      "hex": "#a59c90",
+      "fraction_pct": 25.0,
+      "brightness": 155.0
+    },
+    {
+      "rgb": [
+        178,
+        157,
+        133
+      ],
+      "hex": "#b29d85",
+      "fraction_pct": 7.81,
+      "brightness": 156.0
+    },
+    {
+      "rgb": [
+        196,
+        186,
+        174
+      ],
+      "hex": "#c4baae",
+      "fraction_pct": 25.0,
+      "brightness": 185.33333333333334
+    },
+    {
+      "rgb": [
+        221,
+        213,
+        202
+      ],
+      "hex": "#ddd5ca",
+      "fraction_pct": 14.06,
+      "brightness": 212.0
+    }
+  ],
+  "source": "imagecolorpicker-style K-means analysis (colors.xlsx)",
+  "pore_candidate_indices": [
+    0,
+    1
+  ]
+}
