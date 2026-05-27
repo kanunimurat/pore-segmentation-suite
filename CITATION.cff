@@ -22,7 +22,7 @@ date-released: "2026-05-27"
 license: MIT
 repository-code: "https://github.com/kanunimurat/pore-segmentation-suite"
 url: "https://github.com/kanunimurat/pore-segmentation-suite"
-doi: "10.5281/zenodo.XXXXXXX"
+doi: "10.5281/zenodo.20416896"
 keywords:
   - travertine characterization
   - pore segmentation
@@ -42,7 +42,7 @@ preferred-citation:
       given-names: Murat
   version: "1.0.0"
   year: 2026
-  doi: "10.5281/zenodo.XXXXXXX"
+  doi: "10.5281/zenodo.20416896"
   url: "https://github.com/kanunimurat/pore-segmentation-suite"
 references:
   - type: article

@@ -32,20 +32,20 @@ Repo'da Releases → "Draft a new release":
 4. Pore-color-segmentation reposunu **aç** (toggle ON)
 5. GitHub'da yeni release oluştur (v1.0.0)
 6. Zenodo otomatik olarak yeni bir DOI atayacak (~10 dakika içinde)
-7. DOI formatı: `10.5281/zenodo.XXXXXXX`
+7. DOI formatı: `10.5281/zenodo.20416896`
 
 ## 4. CITATION.cff'i Güncelle
 
 DOI alınca `CITATION.cff` dosyasındaki:
 ```yaml
-doi: "10.5281/zenodo.XXXXXXX"
+doi: "10.5281/zenodo.20416896"
 ```
 satırını gerçek DOI ile değiştir, commit + push.
 
 ## 5. README'ye Atıf Rozeti Ekle
 
 ```markdown
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20416896.svg)](https://doi.org/10.5281/zenodo.20416896)
 [![CITATION.cff](https://img.shields.io/badge/cite-CITATION.cff-blue)](CITATION.cff)
 ```
 
@@ -56,7 +56,7 @@ Methods bölümünün sonuna:
 > **Software Availability:** The interactive segmentation tool developed
 > in this study, "Gözenek ve Renk Tespit Yazılımı" v1.0, is freely available
 > at [GitHub URL] under MIT license. A versioned release is archived on
-> Zenodo (DOI: 10.5281/zenodo.XXXXXXX). For software-specific implementation
+> Zenodo (DOI: 10.5281/zenodo.20416896). For software-specific implementation
 > details, see the companion software paper (Sert et al., 2026, SoftwareX,
 > in preparation).
 
