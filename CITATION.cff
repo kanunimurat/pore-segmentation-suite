@@ -17,12 +17,6 @@ authors:
     affiliation: "Afyon Kocatepe University, Marble and Natural Stone Technology Application and Research Center"
     email: msert@aku.edu.tr
     orcid: "https://orcid.org/0000-0001-6595-1681"
-  - family-names: Çelik
-    given-names: Mustafa Yavuz
-    affiliation: "Afyon Kocatepe University, Afyon Vocational School, Department of Marble Technology"
-  - family-names: Arsoy
-    given-names: Zeyni
-    affiliation: "Afyon Kocatepe University, Marble and Natural Stone Technology Application and Research Center"
 version: "1.0.0"
 date-released: "2026-05-27"
 license: MIT
@@ -46,10 +40,6 @@ preferred-citation:
   authors:
     - family-names: Sert
       given-names: Murat
-    - family-names: Çelik
-      given-names: Mustafa Yavuz
-    - family-names: Arsoy
-      given-names: Zeyni
   version: "1.0.0"
   year: 2026
   doi: "10.5281/zenodo.XXXXXXX"

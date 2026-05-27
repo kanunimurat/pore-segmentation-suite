@@ -173,13 +173,19 @@ pore-segmentation-suite/
 
 Bu aracı kullanırsanız lütfen şu şekilde atıf yapın:
 
-> Sert, M. ve diğ. (2026). *Gözenek ve Renk Tespit Yazılımı v1.0:*  
-> *An open-source interactive tool for travertine pore segmentation.*  
+> Sert, M. (2026). *Pore Segmentation Suite v1.0.0:*  
+> *An open-source interactive software for travertine surface characterization.*  
 > Zenodo. https://doi.org/10.5281/zenodo.XXXXXXX
+
+Ve eşlik eden yazılım makalesi:
+
+> Sert, M. (2026). *Pore Segmentation Suite: An open-source multi-mode*  
+> *software for travertine characterization.*  
+> SoftwareX. [in preparation]
 
 Ve eşlik eden metodoloji makalesi:
 
-> Sert, M. ve diğ. (2026). *Per-stone adaptive pore segmentation of travertines:*  
+> Sert, M. (2026). *Per-stone adaptive pore segmentation of travertines:*  
 > *A comparative benchmark of classical thresholding, extremal regions,*  
 > *and modern foundation models.*  
 > Construction and Building Materials. [in preparation]
