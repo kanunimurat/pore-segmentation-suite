@@ -1,63 +1,51 @@
 cff-version: 1.2.0
-title: "Pore Segmentation Suite"
-message: "If you use this software, please cite it as below."
+title: Pore Segmentation Suite
 abstract: >-
-  An open-source interactive software for travertine surface
-  characterization. Integrates four work modes (pore segmentation,
-  color palette extraction, aging analysis, journal-ready figure
-  collage) in a single Streamlit-based interface. Supports 13
-  segmentation algorithms ranging from classical thresholding
-  (Sauvola, Multi-Otsu, MSER, DoG, Frangi, Watershed) to modern
-  foundation models (SAM 2, Cellpose). Includes TS EN 15886 and
-  CIEDE2000 compliant automated statistical aging analysis with
-  paper-ready scientific interpretation.
+  An open-source, interactive, multi-method tool for pore segmentation and
+  colour characterization of travertines and similar natural stones. It unifies
+  four work modes (pore segmentation, colour-palette extraction, aging analysis,
+  and journal-ready figure collage) in a single Streamlit interface, supporting
+  classical (Sauvola, Multi-Otsu, Auto-Threshold, DoG, MSER, Bottom-Hat, Frangi,
+  Watershed, Color-Distance, GMM, and two colour hybrids) and modern
+  deep-learning (SAM 2, Cellpose) algorithms, a multi-method porosity-spread
+  output, an EN 15886 / CIEDE2000 compliant aging-statistics engine, and a
+  bilingual (English / Turkish) interface.
 authors:
   - family-names: Sert
     given-names: Murat
     affiliation: "Afyon Kocatepe University, Marble and Natural Stone Technology Application and Research Center"
     email: msert@aku.edu.tr
     orcid: "https://orcid.org/0000-0001-6595-1681"
-version: "1.0.0"
-date-released: "2026-05-27"
+version: 1.1.0
+date-released: "2026-05-31"
 license: MIT
 repository-code: "https://github.com/kanunimurat/pore-segmentation-suite"
 url: "https://github.com/kanunimurat/pore-segmentation-suite"
 doi: "10.5281/zenodo.20416896"
 keywords:
-  - travertine characterization
+  - travertine
+  - image processing
   - pore segmentation
-  - aging analysis
+  - colour characterization
   - CIEDE2000
-  - open-source scientific software
-  - color palette extraction
+  - uncertainty quantification
+  - foundation models
   - SAM 2
-  - Cellpose
-  - Streamlit
-  - FAIR4RS
 preferred-citation:
   type: software
-  title: "Pore Segmentation Suite"
+  title: "Pore Segmentation Suite: an open-source, interactive, multi-method tool for pore segmentation and colour characterization"
   authors:
     - family-names: Sert
       given-names: Murat
-  version: "1.0.0"
+  version: 1.1.0
   year: 2026
   doi: "10.5281/zenodo.20416896"
-  url: "https://github.com/kanunimurat/pore-segmentation-suite"
 references:
   - type: article
-    title: "Pore Segmentation Suite: An open-source multi-mode software for travertine characterization (companion software paper)"
+    title: "Pore Segmentation Suite: an open-source, interactive, multi-method tool for pore segmentation and colour characterization"
     authors:
       - family-names: Sert
         given-names: Murat
     year: 2026
     journal: "SoftwareX"
-    notes: "in preparation"
-  - type: article
-    title: "Per-stone adaptive pore segmentation of travertines: A comparative benchmark"
-    authors:
-      - family-names: Sert
-        given-names: Murat
-    year: 2026
-    journal: "Construction and Building Materials"
-    notes: "in preparation"
+    notes: "under review"

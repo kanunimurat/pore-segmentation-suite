@@ -6,9 +6,9 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io)
 [![FAIR4RS](https://img.shields.io/badge/FAIR4RS-compliant-brightgreen.svg)](https://www.rd-alliance.org/group/fair-research-software-fair4rs-wg)
 
-**An open-source interactive software for travertine surface characterization.**
-Version: 1.0.0 — 2026
-License: MIT  |  Author: Murat SERT, Afyon Kocatepe University
+**An open-source, interactive, multi-method tool for pore segmentation and colour characterization of travertines and similar natural stones.**
+Version: 1.1.0 — 2026
+License: MIT | Author: Murat SERT, Afyon Kocatepe University
 
 ---
 
@@ -19,7 +19,7 @@ License: MIT  |  Author: Murat SERT, Afyon Kocatepe University
 Double-click `İlk Kurulum.command` (Initial Setup).
 (If macOS shows a security warning: right-click → Open)
 
-This automatically installs the required Python libraries (~2-3 minutes).
+This automatically installs the required Python libraries (~2–3 minutes).
 
 ### 2️⃣ Launch the application
 
@@ -31,28 +31,25 @@ Your browser opens automatically at `http://localhost:8501`.
 
 - Upload an image from the left panel (jpg/png/tif)
 - Select the stone type (KT/GT/NT/PT)
-- Select an algorithm (13 methods available)
+- Select an algorithm (**14 methods available**)
 - Adjust the sliders — the overlay updates in real time
 - Save good parameter sets via "💾 Save these parameters"
+- Switch the interface language (English / Turkish) from the sidebar
 
 ---
 
-## ⚠️ macOS Security Warning on First Launch
+## ✨ Four Work Modes
 
-Mac may block downloaded executables. If you see a "cannot be opened" error:
+1. **Pore Segmentation** — single-image pore detection with 14 algorithms across five families.
+2. **Colour Palette** — dominant-colour extraction (5 clustering algorithms × 3 colour spaces).
+3. **Aging Analysis** — pre/post colour-change statistics compliant with EN 15886 and CIEDE2000, with a Mokrzycki–Tatol perceptual interpretation.
+4. **Collage Builder** — journal-ready figure collages (Elsevier/Springer/ACS presets, up to 600 DPI).
 
-**Solution 1 (easy):** Right-click the file → **Open**. After the first launch, normal double-click works.
-
-**Solution 2 (permanent):** In Terminal:
-```bash
-cd pore-segmentation-suite
-xattr -dr com.apple.quarantine Başlat.command
-xattr -dr com.apple.quarantine "İlk Kurulum.command"
-```
+The modes are unified in a single Streamlit interface with no manual data transfer between separate tools.
 
 ---
 
-## 🎨 13 Algorithms — 5 Categories
+## 🎨 14 Algorithms — 5 Families
 
 ### 🔵 Classical Thresholding
 - **Sauvola** — Local adaptive thresholding
@@ -63,11 +60,11 @@ xattr -dr com.apple.quarantine "İlk Kurulum.command"
 - **DoG** — Difference of Gaussians (with multi-scale option)
 - **MSER** — Maximally Stable Extremal Regions
 - **Bottom-Hat Morphology** — Isolates small dark details
-- **Frangi Vesselness** — Elongated/connected structures
+- **Frangi Vesselness** — Elongated / connected structures
 - **Watershed (Marker-Controlled)** — Separates touching pores
 
-### 🟣 Color & Clustering-Based
-- **Color Distance** — Color-palette based
+### 🟣 Colour & Clustering-Based
+- **Color Distance** — Colour-palette based
 - **GMM** — Gaussian Mixture Model (probabilistic)
 
 ### 🤝 Hybrid
@@ -76,7 +73,7 @@ xattr -dr com.apple.quarantine "İlk Kurulum.command"
 
 ### 🚀 Modern Deep Learning (optional)
 - **SAM 2** (Segment Anything Model 2, Meta 2024)
-- **CellPose 3** (Pretrained generalist)
+- **Cellpose** (pretrained generalist)
 
 **Additional installation for DL backends:**
 ```bash
@@ -85,16 +82,34 @@ pip3 install -r requirements-modern.txt
 
 ---
 
-## 🎨 Color Palette System
+## 🔬 Multi-Method Comparison (porosity spread)
 
-For each stone type, **7 dominant colors** (K-means clustering):
+A distinctive feature of the suite: the same image can be processed by all
+setup-free algorithms at once, and the results are presented side by side as a
+comparison collage together with the resulting **porosity spread**. This makes
+the dependence of the porosity measurement on method choice — and the
+associated uncertainty — explicit and auditable rather than hidden behind a
+single number. The engine lives in `modules/comparison.py` and is also exposed
+as a "Comparison" template in the Collage Builder.
+
+---
+
+## 🌐 Bilingual Interface
+
+The full user interface is available in **English and Turkish** (`modules/i18n.py`),
+switchable from the sidebar at run time.
+
+---
+
+## 🎨 Colour Palette System
+
+For each stone type, **7 dominant colours** (K-means clustering):
 - Automatic loading: `palettes/{KT,GT,NT,PT}.json`
-- New K-means computation from image (one click)
-- Pixel-click color picker ("Add this point's color to the pore list")
-- Mark each color as pore/matrix (checkbox)
+- New K-means computation from an image (one click)
+- Pixel-click colour picker ("Add this point's colour to the pore list")
+- Mark each colour as pore/matrix (checkbox)
 
 ## 🚫 False-Positive Filters
-
 - **Minimum pore area** (px)
 - **Eccentricity** — Reject bands
 - **Solidity** — Reject irregular shapes
@@ -102,9 +117,8 @@ For each stone type, **7 dominant colors** (K-means clustering):
 - **Must be dark** — Below median
 
 ## 🎯 Overlay Customization
-
 - **2 styles**: Fill (transparent) / Outline only
-- **12 color presets** + Auto + Custom (hex picker)
+- **12 colour presets** + Auto + Custom (hex picker)
 - **Alpha slider** (0.1 — 0.95)
 - **Outline thickness slider** (1 — 8 px)
 
@@ -114,54 +128,50 @@ For each stone type, **7 dominant colors** (K-means clustering):
 
 ```
 pore-segmentation-suite/
-├── 🚀 Başlat.command           ← DOUBLE-CLICK TO LAUNCH
-├── 🛠️ İlk Kurulum.command      ← For first-time setup
-├── 📄 pore_tuner.py             ← Main Streamlit application (v1)
-├── 📄 pore_tuner_v2.py          ← Main Streamlit application (v2, mode selector)
+├── 🚀 Başlat.command            ← DOUBLE-CLICK TO LAUNCH
+├── 🛠️ İlk Kurulum.command       ← For first-time setup
+├── 📄 pore_tuner.py             ← Streamlit application (v1)
+├── 📄 pore_tuner_v2.py          ← Streamlit application (v2, mode selector)
 ├── 📁 modules/                  ← Backend modules
-│   ├── segmentation.py          (13 algorithms)
-│   ├── color_science.py         (CIE Lab, CIEDE2000)
-│   ├── aging_analysis.py        (Pre/post pairing, statistics)
-│   ├── collage_builder.py       (Q1 journal figure builder)
-│   ├── filters.py               (False-positive filtering)
-│   ├── palettes.py              (Palette I/O)
-│   ├── presets.py               (Parameter save/load)
-│   └── utils.py                 (Helper functions)
-├── 📁 palettes/                 ← Per-stone color palette JSONs
-│   ├── KT.json   (Karaman Light Travertine)
-│   ├── GT.json   (Emirdağ Silver Travertine)
-│   ├── NT.json   (Antalya Noche Travertine)
-│   └── PT.json   (Kütahya Pink Travertine)
+│   ├── segmentation.py          (14 algorithms)
+│   ├── color_science.py         (CIE L*a*b*, CIEDE2000)
+│   ├── aging_analysis.py        (pre/post pairing, statistics)
+│   ├── collage_builder.py       (journal figure builder)
+│   ├── comparison.py            (multi-method batch + comparison collage)
+│   ├── filters.py               (false-positive filtering)
+│   ├── palettes.py              (palette I/O)
+│   ├── presets.py               (parameter save/load)
+│   ├── i18n.py                  (English / Turkish interface)
+│   └── utils.py                 (helper functions)
+├── 📁 palettes/                 ← Per-stone colour palette JSONs
+│   ├── KT.json   (Karaman)
+│   ├── GT.json   (Grey / Emirdağ)
+│   ├── NT.json   (Antalya Noche)
+│   └── PT.json   (Kütahya Pink)
 ├── 📁 presets/                  ← User parameter presets
 ├── 📁 assets/                   ← Icon files (PNG, ICNS)
 │
 ├── 📄 README.md                 ← This file
 ├── 📄 LICENSE                   ← MIT
-├── 📄 CITATION.cff              ← Modern citation format
+├── 📄 CITATION.cff              ← Citation metadata
 ├── 📄 CHANGELOG.md              ← Version history
-├── 📄 ZENODO_SETUP.md           ← Citation infrastructure guide
 ├── 📄 requirements.txt          ← Core Python dependencies
-└── 📄 requirements-modern.txt   ← Optional DL dependencies (SAM 2, CellPose)
+└── 📄 requirements-modern.txt   ← Optional DL dependencies (SAM 2, Cellpose)
 ```
 
 ---
 
 ## 🆘 Troubleshooting
 
-**"streamlit: command not found"**
-→ In Terminal: `python3 -m pip install -r requirements.txt`
+**"streamlit: command not found"** → In Terminal: `python3 -m pip install -r requirements.txt`
 
-**"Permission denied" (when double-clicking .command files)**
-→ In Terminal: `chmod +x "Başlat.command"`
+**"Permission denied" (when double-clicking .command files)** → In Terminal: `chmod +x "Başlat.command"`
 
-**Application launched but slow**
-→ Very large images (>3000 px) process slowly. Resize first: ~1500 px is ideal.
+**Application launched but slow** → Very large images (>3000 px) process slowly. Resize first: ~1500 px is ideal.
 
-**SAM 2 / CellPose selected but "not installed" error**
-→ `pip3 install -r requirements-modern.txt` (downloads approximately 500MB–2GB)
+**SAM 2 / Cellpose selected but "not installed" error** → `pip3 install -r requirements-modern.txt` (downloads approximately 500 MB – 2 GB)
 
-**Browser did not open automatically**
-→ Manual: http://localhost:8501
+**Browser did not open automatically** → Manual: http://localhost:8501
 
 ---
 
@@ -169,22 +179,11 @@ pore-segmentation-suite/
 
 If you use this software, please cite it as follows:
 
-> Sert, M. (2026). *Pore Segmentation Suite v1.0.0:*
-> *An open-source interactive software for travertine surface characterization.*
-> Zenodo. https://doi.org/10.5281/zenodo.20416896
+> Sert, M. (2026). *Pore Segmentation Suite: an open-source, interactive, multi-method tool for pore segmentation and colour characterization.* Zenodo. https://doi.org/10.5281/zenodo.20416896
 
 And the companion software paper:
 
-> Sert, M. (2026). *Pore Segmentation Suite: An open-source multi-mode*
-> *software for travertine characterization.*
-> SoftwareX. [in preparation]
-
-And the companion methodology paper:
-
-> Sert, M. (2026). *Per-stone adaptive pore segmentation of travertines:*
-> *A comparative benchmark of classical thresholding, extremal regions,*
-> *and modern foundation models.*
-> Construction and Building Materials. [in preparation]
+> Sert, M. (2026). *Pore Segmentation Suite: an open-source, interactive, multi-method tool for pore segmentation and colour characterization.* SoftwareX. [under review]
 
 The `CITATION.cff` file is automatically recognized by GitHub.
 
@@ -202,5 +201,5 @@ Marble and Natural Stone Technology Application and Research Center
 
 ## 🤝 Contributing
 
-If you have suggestions for new algorithms, new filters, or new features, please open a GitHub issue or contact me directly via email.
+If you have suggestions for new algorithms, filters, or features, please open a GitHub issue or contact me directly via email.
 This software is designed for the scientific community — your use cases are valuable.
