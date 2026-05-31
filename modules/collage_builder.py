@@ -215,6 +215,15 @@ def _build_outside_cell(cell_img, label_text, position='bottom',
 # MAIN COLLAGE BUILDER
 # ============================================================
 
+def _vertical_label(text, font, color):
+    """Render text rotated 90 degrees (reads bottom-to-top) as an RGBA image."""
+    dummy = ImageDraw.Draw(Image.new('RGB', (1, 1)))
+    tw, th = _text_size(dummy, text, font)
+    tmp = Image.new('RGBA', (tw + 6, th + 6), (0, 0, 0, 0))
+    ImageDraw.Draw(tmp).text((3, 3), text, fill=color, font=font)
+    return tmp.rotate(90, expand=True)
+
+
 def build_collage(
     cells_2d,                       # 2D list: [[{image, label, ...}, ...], ...]
     cell_size=(400, 400),          # her hucre gorsel boyutu (px)
@@ -231,6 +240,7 @@ def build_collage(
     header_color=(0, 0, 0),
     header_height=None,            # auto if None
     row_label_width=None,
+    row_label_vertical=False,   # rotate row labels 90deg
     cell_spacing=4,
     background_color=(255, 255, 255),
     footer_text=None,
@@ -275,6 +285,11 @@ def build_collage(
             resized = _resize_to_cell(img, (cw, ch), mode=resize_mode)
             
             label = cell_dict.get('label', '')
+            # Per-cell style overrides (fall back to global defaults) — enables
+            # multi-colour method banners within a single collage.
+            c_bg = cell_dict.get('label_bg', label_bg_color)
+            c_tc = cell_dict.get('label_tc', label_text_color)
+            c_fs = cell_dict.get('label_fs', label_font_size)
             
             # Label rendering
             if label and label_position != 'none':
@@ -282,9 +297,9 @@ def build_collage(
                     pos = label_position.replace('inside_', '')
                     resized = _render_inside_label(
                         resized, label, position=pos,
-                        bg_color=label_bg_color,
-                        text_color=label_text_color,
-                        font_size=label_font_size,
+                        bg_color=c_bg,
+                        text_color=c_tc,
+                        font_size=c_fs,
                         padding=label_padding,
                         alpha=label_alpha,
                     )
@@ -294,7 +309,7 @@ def build_collage(
                         resized, label, position=pos,
                         bg_color=background_color,
                         text_color=header_color,
-                        font_size=label_font_size,
+                        font_size=c_fs,
                         padding=label_padding,
                     )
             
@@ -325,16 +340,20 @@ def build_collage(
     show_row_labels = row_labels is not None and any(row_labels)
     
     if show_col_headers and header_height is None:
-        header_height = header_font_size * 2 + 20
+        _maxlines = max((str(h).count('\n') + 1) for h in col_headers if h)
+        header_height = int(header_font_size * _maxlines * 1.35) + 18
     elif not show_col_headers:
         header_height = 0
     
     if show_row_labels and row_label_width is None:
-        # En genis row label'a gore
         dummy = ImageDraw.Draw(Image.new('RGB', (1, 1)))
         font = _get_font(header_font_size, bold=True)
-        max_w = max(_text_size(dummy, str(rl), font)[0] for rl in row_labels)
-        row_label_width = max_w + 24
+        if row_label_vertical:
+            # rotated -> horizontal extent equals text height
+            max_dim = max(_text_size(dummy, str(rl), font)[1] for rl in row_labels)
+        else:
+            max_dim = max(_text_size(dummy, str(rl), font)[0] for rl in row_labels)
+        row_label_width = max_dim + 24
     elif not show_row_labels:
         row_label_width = 0
     
@@ -369,10 +388,16 @@ def build_collage(
         
         if show_row_labels and r < len(row_labels) and row_labels[r]:
             row_txt = str(row_labels[r])
-            text_w, text_h = _text_size(draw, row_txt, font_r)
-            tx = (row_label_width - text_w) // 2
-            ty = y_top + (max_cell_h - text_h) // 2
-            draw.text((tx, ty), row_txt, fill=header_color, font=font_r)
+            if row_label_vertical:
+                rlab = _vertical_label(row_txt, font_r, header_color)
+                px = max(0, (row_label_width - rlab.width) // 2)
+                py = y_top + (max_cell_h - rlab.height) // 2
+                canvas.paste(rlab, (px, py), rlab)
+            else:
+                text_w, text_h = _text_size(draw, row_txt, font_r)
+                tx = (row_label_width - text_w) // 2
+                ty = y_top + (max_cell_h - text_h) // 2
+                draw.text((tx, ty), row_txt, fill=header_color, font=font_r)
         
         for c in range(n_cols):
             x_left = row_label_width + c * (max_cell_w + cell_spacing)
