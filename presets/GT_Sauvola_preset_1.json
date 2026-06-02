@@ -1,0 +1,28 @@
+{
+  "name": "preset_1",
+  "stone_code": "GT",
+  "algorithm": "Sauvola",
+  "params": {
+    "algorithm": "Sauvola (Adaptive Threshold)",
+    "algo_params": {
+      "window_size": 51,
+      "k": 0.2
+    },
+    "filter_params": {
+      "min_area": 8,
+      "use_max_eccentricity": false,
+      "use_min_solidity": false,
+      "use_max_interior_std": false,
+      "must_be_dark": true,
+      "dark_thresh_factor": 0.95
+    },
+    "pore_color_indices": [
+      0,
+      1
+    ],
+    "custom_pore_colors": []
+  },
+  "metrics": null,
+  "notes": "",
+  "saved_at": "2026-06-02T19:50:13.382948"
+}

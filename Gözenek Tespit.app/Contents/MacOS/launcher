@@ -1,0 +1,26 @@
+#!/bin/bash
+# Gözenek Tespit.app launcher
+# .app'in iki üst klasörü → Gözenek ve Renk Tespit Yazılımı/
+
+APP_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+PARENT_DIR="$(dirname "$APP_DIR")"
+
+# Eğer .app, ana klasör içindeyse parent kullan, değilse APP_DIR yanındaki klasör
+if [ -f "$PARENT_DIR/pore_tuner.py" ]; then
+    WORK_DIR="$PARENT_DIR"
+elif [ -f "$APP_DIR/pore_tuner.py" ]; then
+    WORK_DIR="$APP_DIR"
+else
+    osascript -e 'display alert "Gözenek Tespit" message "pore_tuner.py bulunamadı. .app dosyasını yazılım klasörünün içinde tut."'
+    exit 1
+fi
+
+cd "$WORK_DIR"
+
+# Terminal açıp Başlat.command'ı çalıştır
+osascript <<EOF
+tell application "Terminal"
+    activate
+    do script "cd \"$WORK_DIR\" && bash \"./Başlat.command\""
+end tell
+EOF

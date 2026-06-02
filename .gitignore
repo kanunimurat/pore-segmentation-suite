@@ -1,68 +1,23 @@
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Python
+# -- Python --
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+*.pyc
+*.pyo
 
-# Virtual environments
-venv/
-env/
-ENV/
-.venv/
-.env/
+# -- macOS --
+.DS_Store
 
-# Streamlit
-.streamlit/secrets.toml
-
-# Jupyter
-.ipynb_checkpoints/
-*.ipynb
-
-# PyTorch / SAM2 checkpoints (large files)
-*.pth
-*.pt
-sam2_checkpoints/
-
-# Backups
+# -- Yedek dosyalar (GitHub'a gitmesin) --
+*.bak
+*.bak_*
+*.backup
 *.backup_*
-*~
+*.py.bak*
+*.py.backup*
 
-# User-generated outputs
+# -- Calisma/cikti klasoru --
 outputs/
-sample_images/
-.cache/
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Test/development
-.pytest_cache/
-.coverage
-htmlcov/
-
-# macOS .app bundle (deployment artifact, regenerated)
-*.app/
+# -- Sanal ortamlar --
+venv/
+.venv/
+env/

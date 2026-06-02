@@ -1,23 +1,20 @@
 cff-version: 1.2.0
-title: Pore Segmentation Suite
+title: Gözenek ve Renk Tespit Yazılımı
 abstract: >-
-  An open-source, interactive, multi-method tool for pore segmentation and
-  colour characterization of travertines and similar natural stones. It unifies
-  four work modes (pore segmentation, colour-palette extraction, aging analysis,
-  and journal-ready figure collage) in a single Streamlit interface, supporting
-  classical (Sauvola, Multi-Otsu, Auto-Threshold, DoG, MSER, Bottom-Hat, Frangi,
+  An open-source interactive tool for travertine surface pore segmentation
+  with per-stone color palette integration, supporting classical
+  (Sauvola, Multi-Otsu, Auto-Threshold, DoG, MSER, Bottom-Hat, Frangi,
   Watershed, Color-Distance, GMM, and two colour hybrids) and modern
-  deep-learning (SAM 2, Cellpose) algorithms, a multi-method porosity-spread
-  output, an EN 15886 / CIEDE2000 compliant aging-statistics engine, and a
-  bilingual (English / Turkish) interface.
+  deep-learning (SAM 2, CellPose) algorithms, plus a multi-method
+  porosity-spread output and a comparison-collage builder.
 authors:
   - family-names: Sert
     given-names: Murat
     affiliation: "Afyon Kocatepe University, Marble and Natural Stone Technology Application and Research Center"
     email: msert@aku.edu.tr
     orcid: "https://orcid.org/0000-0001-6595-1681"
-version: 1.1.0
-date-released: "2026-05-31"
+version: 1.2.0
+date-released: "2026-06-02"
 license: MIT
 repository-code: "https://github.com/kanunimurat/pore-segmentation-suite"
 url: "https://github.com/kanunimurat/pore-segmentation-suite"
@@ -25,27 +22,27 @@ doi: "10.5281/zenodo.20416896"
 keywords:
   - travertine
   - image processing
-  - pore segmentation
-  - colour characterization
-  - CIEDE2000
-  - uncertainty quantification
-  - foundation models
+  - pore detection
+  - segmentation
+  - building stone
+  - color palette
   - SAM 2
+  - foundation models
 preferred-citation:
   type: software
-  title: "Pore Segmentation Suite: an open-source, interactive, multi-method tool for pore segmentation and colour characterization"
+  title: Gözenek ve Renk Tespit Yazılımı
   authors:
     - family-names: Sert
       given-names: Murat
-  version: 1.1.0
+  version: 1.2.0
   year: 2026
   doi: "10.5281/zenodo.20416896"
 references:
   - type: article
-    title: "Pore Segmentation Suite: an open-source, interactive, multi-method tool for pore segmentation and colour characterization"
+    title: "Per-stone adaptive pore segmentation of travertines: A comparative benchmark"
     authors:
       - family-names: Sert
         given-names: Murat
     year: 2026
-    journal: "SoftwareX"
-    notes: "under review"
+    journal: "Construction and Building Materials"
+    notes: "in preparation"

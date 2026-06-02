@@ -22,17 +22,132 @@ from io import BytesIO
 from PIL import Image
 from datetime import datetime
 
-from modules import segmentation, filters, utils, palettes, presets, color_science as cs, aging_analysis as aa, collage_builder as cb
+from modules import segmentation, filters, utils, palettes, presets, color_science as cs, aging_analysis as aa, collage_builder as cb, comparison as comp, pore_size as psize
+from modules.i18n import T, render_language_selector, init_language, translate_classification, translate_cs
+
+
+# ============================================================
+# TEMA-DUYARLI GRAFİK PALETİ
+# Oğuz Ergin "Tantuni Endeksi" tasarım dili: sıcak turuncu ana vurgu,
+# altın/kırmızı/yeşil anlamsal renkler, güçlü tipografi.
+# Açık tema -> koyu metin + sıcak pastel; koyu tema -> açık metin + derin ton.
+# ============================================================
+def _detect_ui_theme():
+    try:
+        _t = st.context.theme.type
+    except Exception:
+        _t = None
+    if _t not in ('light', 'dark'):
+        try:
+            _t = st.get_option('theme.base')
+        except Exception:
+            _t = None
+    return _t if _t in ('light', 'dark') else 'light'
+
+
+def _chart_pal(theme=None):
+    theme = theme or _detect_ui_theme()
+    if theme == 'dark':
+        return dict(theme='dark', ink='#e8eef5', muted='#9aa7b4', grid='#2b3340',
+                    axis='#c2ccd6', accent='#FF8C42', gold='#F4C04E', red='#FF6B6B',
+                    green='#4FD17F', fill='#3a2f23', edge='#FF9F5A', dot_ring='#11161d',
+                    res_shade='#5a6675', res_op='0.30',
+                    fam={'Classical': '#5BA3F5', 'Blob/region': '#FF6B6B', 'Clustering': '#4FD17F'})
+    return dict(theme='light', ink='#1f2d3a', muted='#5b6876', grid='#eceff3',
+                axis='#334155', accent='#E8722C', gold='#C28A00', red='#D64545',
+                green='#2E9E5B', fill='#FBE3CB', edge='#C25A18', dot_ring='#ffffff',
+                res_shade='#b9c2cc', res_op='0.28',
+                fam={'Classical': '#1f77b4', 'Blob/region': '#d62728', 'Clustering': '#2ca02c'})
+
+
+def _inject_global_css():
+    """Oğuz Ergin 'Tantuni Endeksi' görsel dili: turuncu vurgu, kart panelleri,
+    güçlü tipografi. Tema (açık/koyu) otomatik algılanır."""
+    pal = _chart_pal()
+    acc = pal['accent']
+    acc_d = '#C25A18' if pal['theme'] == 'light' else '#FF7A2B'
+    soft = pal['fill']
+    border = pal['grid']
+    st.markdown(f"""
+    <style>
+    :root {{ --acc:{acc}; --acc-d:{acc_d}; }}
+    html, body, .stApp, button, input, textarea, select {{
+        font-family:'Inter','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif; }}
+    /* Başlıklar: turuncu sol vurgu (Oğuz tarzı bölüm başlığı) */
+    .stApp h2, .stApp h3 {{
+        border-left:4px solid var(--acc); padding-left:.6rem; letter-spacing:.2px; }}
+    .stApp h1 {{ letter-spacing:.2px; }}
+    /* Butonlar: sıcak turuncu dolgu */
+    .stButton>button, .stDownloadButton>button, [data-testid="stFormSubmitButton"]>button {{
+        background:var(--acc); color:#111 !important; border:0; border-radius:9px;
+        font-weight:700; font-size:calc(1rem + 2pt) !important;
+        box-shadow:0 1px 2px rgba(0,0,0,.10); transition:filter .15s ease; }}
+    .stButton>button *, .stDownloadButton>button *, [data-testid="stFormSubmitButton"]>button * {{
+        color:#111 !important; font-size:calc(1rem + 2pt) !important; }}
+    .stButton>button:hover, .stDownloadButton>button:hover {{ filter:brightness(1.08); color:#111 !important; }}
+    /* Mod bilgilendirme paneli metni +4pt (#3) */
+    .st-key-mode_info_panel p, .st-key-mode_info_panel li,
+    .st-key-mode_info_panel h2, .st-key-mode_info_panel h3,
+    .st-key-mode_info_panel [data-testid="stMarkdownContainer"],
+    .st-key-mode_info_panel [data-testid="stAlertContainer"],
+    .st-key-mode_info_panel [data-testid="stAlert"] p {{
+        font-size:calc(1rem + 4pt) !important; line-height:1.4 !important; }}
+    .stButton>button:active {{ background:var(--acc-d); }}
+    /* Metric değeri: turuncu vurgu */
+    [data-testid="stMetricValue"] {{ color:var(--acc); font-weight:700; }}
+    /* Expander: kart görünümü */
+    [data-testid="stExpander"] details {{
+        border:1px solid {border}; border-radius:12px; overflow:hidden; }}
+    [data-testid="stExpander"] summary {{ font-weight:600; }}
+    [data-testid="stExpander"] summary:hover {{ color:var(--acc); }}
+    /* Sekmeler */
+    .stTabs [aria-selected="true"] {{ color:var(--acc) !important; }}
+    .stTabs [data-baseweb="tab-highlight"] {{ background:var(--acc) !important; }}
+    /* Slider tutamacı */
+    [data-testid="stSlider"] [role="slider"] {{ background:var(--acc) !important; }}
+    /* Bağlantılar */
+    .stApp a {{ color:var(--acc); }}
+    /* Oğuz tarzı ışıldayan turuncu marka yazısı */
+    @keyframes brandGlow {{
+        0%, 100% {{ filter:drop-shadow(0 0 4px rgba(232,114,44,.45)) drop-shadow(0 0 9px rgba(232,114,44,.28)); }}
+        50%      {{ filter:drop-shadow(0 0 9px rgba(255,140,66,.80)) drop-shadow(0 0 20px rgba(255,140,66,.50)); }}
+    }}
+    .brand-glow {{
+        background:linear-gradient(180deg,#FFB36B 0%,#FF8C42 45%,#E8722C 100%);
+        -webkit-background-clip:text; background-clip:text;
+        -webkit-text-fill-color:transparent; color:#E8722C;
+        font-weight:800 !important; letter-spacing:.4px;
+        animation:brandGlow 2.6s ease-in-out infinite; }}
+    @media (prefers-reduced-motion: reduce) {{
+        .brand-glow {{ animation:none; filter:drop-shadow(0 0 7px rgba(232,114,44,.55)); }}
+    }}
+    </style>
+    """, unsafe_allow_html=True)
 
 
 # ============================================================
 # SAYFA AYARLARI
 # ============================================================
 st.set_page_config(
-    page_title='Gözenek & Renk Tespit Yazılımı',
+    page_title='Pore Segmentation Suite | Gözenek Tespit',
     page_icon='🪨',
     layout='wide',
 )
+
+# Initialize language session state (must be before any T() call)
+init_language()
+_inject_global_css()  # Oğuz tarzı görsel kimlik (turuncu vurgu)
+
+# Örnek (demo) görüntü yolu ve yükleyici (#3)
+_SAMPLE_IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sample_images', 'sample_travertine.png')
+
+def _load_sample_image():
+    if os.path.exists(_SAMPLE_IMG):
+        st.session_state.image_rgb = utils.load_image(_SAMPLE_IMG)
+        st.session_state.image_name = 'sample_travertine.png'
+        return True
+    return False
+
 
 
 # JSON serialization helper for numpy types (Python 3.14 strict tip kontrolu)
@@ -57,8 +172,8 @@ def safe_json_dumps(obj, **kwargs):
     kwargs.setdefault('ensure_ascii', False)
     return json.dumps(obj, **kwargs)
 
-st.title('🪨 Gözenek ve Renk Tespit Yazılımı')
-st.caption('Travertenler için interaktif segmentasyon — DoG / MSER / Sauvola / Color-Distance + per-stone renk paleti')
+st.title(T('app_title'))
+st.caption(T('app_caption'))
 
 
 # ============================================================
@@ -82,29 +197,78 @@ if 'last_result' not in st.session_state:
 # SIDEBAR — EXPANDER MİMARİSİ
 # ============================================================
 with st.sidebar:
-    # ─── ÜST BRANDING ──────────────────────────────
-    st.markdown("""
+    # ─── TOP BRANDING (üstte) ──────────────────────────────
+    _brand_subtitle = 'v1.2'
+    _brand_name = 'Pore Segmentation Suite' if st.session_state.get('lang', 'en') == 'en' else 'Gözenek & Renk Tespit'
+    st.markdown(f"""
     <div style="text-align:center; padding:12px 4px; margin-bottom:8px;
                 border-bottom:1px solid #444; border-radius:4px;">
-        <div style="font-size:18px; font-weight:600;">🪨 Gözenek & Renk Tespit</div>
-        <div style="color:#888; font-size:12px; margin-top:2px;">v1.0 — Travertin Analizi</div>
+        <div class="brand-glow" style="font-size:26px;">{_brand_name}</div>
+        <div style="color:#888; font-size:20px; margin-top:4px;">{_brand_subtitle}</div>
     </div>
     """, unsafe_allow_html=True)
+
+    # ─── LANGUAGE SELECTOR (altta) (🇹🇷 / 🇬🇧) ───────────────
+    render_language_selector()
+    st.markdown('')  # spacer
     
     # =============================================================
     # 🎯 ÇALIŞMA MODU — Top-Level Mode Selector
     # =============================================================
     mode_options = {
-        '🔬 Gözenek Analizi': 'pore',
-        '🎨 Renk Paleti': 'palette',
-        '🔄 Yaşlandırma Analizi': 'aging',
-        '🖼️ Kolaj Oluşturucu': 'collage',
+        T('mode_pore'):    'pore',
+        T('mode_palette'): 'palette',
+        T('mode_aging'):   'aging',
+        T('mode_collage'): 'collage',
     }
+    # ─── Çalışma Modu görsel stili: +4pt yazı, 3 mm aralık, temaya özel renkler ───
+    # Tema Streamlit'in kendi temasından algılanır (OS değil); açık=pastel, koyu=derin.
+    try:
+        _ui_theme = st.context.theme.type
+    except Exception:
+        _ui_theme = None
+    if _ui_theme not in ('light', 'dark'):
+        try:
+            _ui_theme = st.get_option('theme.base')
+        except Exception:
+            _ui_theme = None
+    _ui_theme = _ui_theme if _ui_theme in ('light', 'dark') else 'light'
+    if _ui_theme == 'dark':
+        _mc = ['#1e3a5f', '#1f3f2c', '#523a1c', '#3a2a52']
+        _fg, _bd, _sh = '#eef2f8', 'rgba(255,255,255,0.14)', 'none'
+    else:
+        _mc = ['#dbe9fb', '#e2f3e1', '#fde9d3', '#ece1f6']
+        _fg, _bd, _sh = '#1f2d3a', 'rgba(0,0,0,0.08)', '0 1px 2px rgba(0,0,0,0.06)'
+    st.markdown(f"""
+    <style>
+    div.st-key-app_mode_selector div[role="radiogroup"]{{gap:0 !important;}}
+    div.st-key-app_mode_selector div[role="radiogroup"] > label{{
+        padding:11px 14px; margin-bottom:3mm; border-radius:11px;
+        border:1px solid {_bd}; box-shadow:{_sh};}}
+    div.st-key-app_mode_selector div[role="radiogroup"] > label:hover{{filter:brightness(0.97);}}
+    div.st-key-app_mode_selector div[role="radiogroup"] > label p,
+    div.st-key-app_mode_selector div[role="radiogroup"] > label div,
+    div.st-key-app_mode_selector div[role="radiogroup"] > label{{
+        font-size:calc(1rem + 4pt) !important; font-weight:600; line-height:1.25; color:{_fg} !important;}}
+    div.st-key-app_mode_selector div[role="radiogroup"] > label:nth-of-type(1){{background:{_mc[0]};}}
+    div.st-key-app_mode_selector div[role="radiogroup"] > label:nth-of-type(2){{background:{_mc[1]};}}
+    div.st-key-app_mode_selector div[role="radiogroup"] > label:nth-of-type(3){{background:{_mc[2]};}}
+    div.st-key-app_mode_selector div[role="radiogroup"] > label:nth-of-type(4){{background:{_mc[3]};}}
+    div.st-key-app_mode_selector label[data-testid="stWidgetLabel"]{{
+        width:100% !important; display:flex !important; justify-content:center !important;}}
+    div.st-key-app_mode_selector label[data-testid="stWidgetLabel"] p,
+    div.st-key-app_mode_selector label[data-testid="stWidgetLabel"] div{{
+        font-size:calc(1rem + 5pt) !important; font-weight:700 !important;
+        text-align:center !important; width:100% !important; color:{_fg} !important;}}
+    </style>
+    """, unsafe_allow_html=True)
     selected_mode = st.radio(
-        '🎯 Çalışma Modu',
+        '🎯 ' + T('select_mode'),
         list(mode_options.keys()),
         key='app_mode_selector',
-        help='Hangi tür analiz yapacaksın? Mod değiştirince ilgili sidebar ve ana panel açılır. Veriler tüm modlarda korunur.')
+        help=('Which analysis type? Switching mode opens the relevant sidebar and main panel. Data is preserved across modes.'
+              if st.session_state.get('lang', 'en') == 'en'
+              else 'Hangi tür analiz yapacaksın? Mod değiştirince ilgili sidebar ve ana panel açılır. Veriler tüm modlarda korunur.'))
     app_mode = mode_options[selected_mode]
     st.session_state['active_mode'] = app_mode
     
@@ -114,59 +278,66 @@ with st.sidebar:
     # 📊 GÖZENEK ANALİZİ — sadece pore moduna aktif
     # =============================================================
     if app_mode == 'pore':
-     with st.expander('📊  **Analize Başla**', expanded=True):
+     with st.expander(T('analyze_start'), expanded=True):
         
         # ──────────── 1. GÖRÜNTÜ ────────────
-        st.markdown('##### 📂 Görüntü Yükle')
+        st.markdown(T('upload_image'))
         
-        upload_mode = st.radio('Kaynak', ['📤 Dosya yükle', '📁 Klasörden seç'], 
+        upload_mode = st.radio(T('source'), [T('src_upload_file'), T('src_from_folder')], 
                                  horizontal=True, label_visibility='collapsed')
         
         uploaded_file = None
-        if upload_mode == '📤 Dosya yükle':
-            uploaded_file = st.file_uploader('Travertin yüzey görüntüsü', 
+        if upload_mode == T('src_upload_file'):
+            uploaded_file = st.file_uploader(T('image_input_label'), 
                                               type=['jpg','jpeg','png','tif','tiff','bmp'],
                                               label_visibility='collapsed')
             if uploaded_file:
                 st.session_state.image_rgb = utils.load_image(uploaded_file)
                 st.session_state.image_name = uploaded_file.name
         else:
-            folder = st.text_input('Klasör yolu', value=os.path.expanduser('~'))
+            folder = st.text_input(T('folder_path'), value=os.path.expanduser('~'))
             if folder and os.path.isdir(folder):
                 imgs = sorted([f for f in os.listdir(folder) 
                               if f.lower().endswith(('.jpg','.jpeg','.png','.tif','.tiff','.bmp'))])
                 if imgs:
-                    pick = st.selectbox('Görüntü seç', imgs)
+                    pick = st.selectbox(T('pick_image'), imgs)
                     if pick:
                         full = os.path.join(folder, pick)
-                        if st.button('🔄 Yükle', use_container_width=True):
+                        if st.button(T('load_btn'), use_container_width=True):
                             st.session_state.image_rgb = utils.load_image(full)
                             st.session_state.image_name = pick
                 else:
-                    st.warning('Klasörde görüntü yok.')
-        
+                    st.warning(T('no_images_in_folder'))
+
+        # Örnek (demo) görüntü — yüklemeden hızlı deneme (#3)
+        if st.session_state.image_rgb is None:
+            if st.button(T('demo_sample'), use_container_width=True, key='demo_btn_side'):
+                if _load_sample_image():
+                    st.rerun()
+            st.caption(T('demo_caption'))
+
         st.markdown('---')
         
         # ──────────── 2. TAŞ & PALET ────────────
-        st.markdown('##### 🪨 Taş Tipi & Renk Paleti')
+        st.markdown(T('stone_palette'))
         
         available_palettes = palettes.list_palettes()
-        stone_options = available_palettes + ['Custom (yeni)']
-        selected_stone = st.selectbox('Taş kodu', stone_options, key='stone_select',
+        stone_options = available_palettes + [T('stone_custom_new')]
+        selected_stone = st.selectbox(T('stone_code'), stone_options, key='stone_select',
                                        label_visibility='collapsed')
         
-        if selected_stone != 'Custom (yeni)' and (st.session_state.palette_data is None or 
+        if selected_stone != T('stone_custom_new') and (st.session_state.palette_data is None or 
                                                     st.session_state.palette_data.get('stone_code') != selected_stone):
             st.session_state.palette_data = palettes.load_palette(selected_stone)
             st.session_state.selected_pore_indices = list(st.session_state.palette_data.get('pore_candidate_indices', [0,1]))
         
         # Yeni palet hesaplama
         if st.session_state.image_rgb is not None:
-            if st.button('🔄 Bu görüntüden K-means palet hesapla', use_container_width=True):
-                with st.spinner('Hesaplanıyor...'):
+            if st.button(T('compute_palette'), use_container_width=True):
+                with st.spinner(T('computing')):
                     colors = segmentation.extract_palette_kmeans(st.session_state.image_rgb, n_clusters=7)
                     st.session_state.palette_data = {
-                        'stone_code': selected_stone if selected_stone != 'Custom (yeni)' else 'CUSTOM',
+                        'stone_code': selected_stone if selected_stone != T('stone_custom_new') else 'CUSTOM',
                         'stone_name': st.session_state.image_name or 'Custom',
                         'n_clusters': 7,
                         'colors': colors,
@@ -174,11 +345,11 @@ with st.sidebar:
                         'pore_candidate_indices': [0, 1],
                     }
                     st.session_state.selected_pore_indices = [0, 1]
-                    st.success('Palet güncellendi.')
+                    st.success(T('palette_updated'))
         
         # Palet gösterimi + checkbox'lar
         if st.session_state.palette_data:
-            st.caption(f'**{st.session_state.palette_data.get("stone_name", "")}** — {st.session_state.palette_data["n_clusters"]} dominant renk')
+            st.caption(f'**{st.session_state.palette_data.get("stone_name", "")}** — {st.session_state.palette_data["n_clusters"]} ' + T('dominant_colors_label'))
             
             new_selected = []
             for i, c in enumerate(st.session_state.palette_data['colors']):
@@ -191,13 +362,13 @@ with st.sidebar:
                     st.markdown(f'<div style="background:{c["hex"]};width:40px;height:25px;border:1px solid #888;border-radius:4px"></div>', 
                                 unsafe_allow_html=True)
                 with cols[2]:
-                    role = '🕳️ pore' if checked else ('☁️ matriks' if c['brightness']>120 else '?')
+                    role = T('role_pore') if checked else (T('role_matrix') if c['brightness']>120 else '?')
                     st.caption(f'`{c["hex"]}` ({c["fraction_pct"]:.1f}%) {role}')
             st.session_state.selected_pore_indices = new_selected
         
         # Custom pore colors (görüntüden eklenmiş)
         if st.session_state.custom_pore_colors:
-            st.caption('**Görüntüden eklenen renkler:**')
+            st.caption(T('colors_from_image'))
             for i, rgb in enumerate(st.session_state.custom_pore_colors):
                 hex_str = utils.rgb_to_hex(rgb)
                 cols = st.columns([1,3,1])
@@ -210,133 +381,133 @@ with st.sidebar:
         st.markdown('---')
         
         # ──────────── 3. ALGORİTMA ────────────
-        st.markdown('##### 🔧 Algoritma')
+        st.markdown(T('algorithm_section'))
         algo_categories = {
-            '🔵 Klasik Eşikleme': [
+            T('family_classical_full'): [
                 'Sauvola (Adaptive Threshold)',
                 'Multi-Otsu (Auto Multi-level)',
                 'Auto Threshold (Triangle/Yen/Otsu)',
             ],
-            '🟢 Blob/Region Detection': [
+            T('family_blob_full'): [
                 'DoG (Difference of Gaussians)',
                 'MSER (Extremal Regions)',
                 'Bottom-Hat Morphology',
                 'Frangi Vesselness',
                 'Watershed (Marker-Controlled)',
             ],
-            '🟣 Renk/Clustering Tabanlı': [
-                'Color Distance (Renk Mesafesi)',
+            T('family_color_full'): [
+                T('algo_color_distance'),
                 'GMM (Gaussian Mixture)',
             ],
-            '🤝 Hibrit (Klasik + Renk)': [
+            T('family_hybrid_full'): [
                 'DoG + Color Filter',
                 'MSER + Color Filter',
             ],
-            '🚀 Modern Deep Learning': [
+            T('family_modern_full'): [
                 'SAM 2 (Segment Anything, Meta 2024)',
                 'CellPose 3 (Pretrained)',
             ],
         }
         category = st.selectbox(
-            'Yöntem',
+            T('algorithm_method'),
             list(algo_categories.keys()),
-            help='Yaklaşım ailesi: klasik eşikleme, blob tespiti, renk-tabanlı, hibrit veya modern derin öğrenme.')
+            help=T('help_algo_family'))
         algo = st.selectbox(
-            'Algoritma',
+            T('algorithm'),
             algo_categories[category],
-            help='Seçtiğin yöntem ailesindeki spesifik algoritma. Aşağıdaki sliderlar bu algoritmaya özgüdür.')
+            help=T('help_algo_specific'))
         
         params = {}
         
         # DoG
         if 'DoG' in algo and 'Color' not in algo or algo == 'DoG + Color Filter':
-            st.caption('**DoG Parametreleri**')
-            params['multiscale'] = st.checkbox('Multi-scale (3 ölçek union)', value=False)
+            st.caption(T('p_dog'))
+            params['multiscale'] = st.checkbox(T('multiscale_3'), value=False)
             if not params['multiscale']:
-                params['sigma1'] = st.slider('σ₁ (küçük ölçek)', 1, 10, 3)
-                params['sigma2'] = st.slider('σ₂ (büyük ölçek)', 5, 30, 15)
-            params['percentile'] = st.slider('Percentile (düşük = daha fazla pore)', 80, 99, 95)
+                params['sigma1'] = st.slider(T('sigma_small'), 1, 10, 3)
+                params['sigma2'] = st.slider(T('sigma_large'), 5, 30, 15)
+            params['percentile'] = st.slider(T('percentile_low_more'), 80, 99, 95)
         
         # MSER
         if 'MSER' in algo:
-            st.caption('**MSER Parametreleri**')
-            params['delta'] = st.slider('Delta (kararlılık)', 1, 10, 4)
+            st.caption(T('p_mser'))
+            params['delta'] = st.slider(T('delta_stability'), 1, 10, 4)
             params['min_area'] = st.slider('Min alan (px)', 4, 100, 10)
             params['max_area'] = st.slider('Max alan (px)', 500, 10000, 3000)
         
         # Sauvola
         if 'Sauvola' in algo:
-            st.caption('**Sauvola Parametreleri**')
-            params['window_size'] = st.slider('Pencere boyutu', 11, 151, 51, step=10)
+            st.caption(T('p_sauvola'))
+            params['window_size'] = st.slider(T('window_size'), 11, 151, 51, step=10)
             params['k'] = st.slider('k', 0.05, 0.5, 0.20, step=0.05)
         
         # Color Distance (& hibrit)
         if 'Color Distance' in algo or 'Color Filter' in algo:
-            st.caption('**Renk Mesafesi Parametreleri**')
-            params['color_space'] = st.selectbox('Renk uzayı', ['lab', 'rgb', 'hsv'])
-            params['max_distance'] = st.slider('Max renk mesafesi (Euclidean)', 5, 80, 25)
+            st.caption(T('p_color'))
+            params['color_space'] = st.selectbox(T('color_space'), ['lab', 'rgb', 'hsv'])
+            params['max_distance'] = st.slider(T('ps_max_color_dist'), 5, 80, 25)
         
         # Multi-Otsu
         if 'Multi-Otsu' in algo:
-            st.caption('**Multi-Otsu Parametreleri** (otomatik, parametresiz)')
-            params['n_classes'] = st.slider('Sınıf sayısı', 2, 6, 3, 
-                                              help='Histogram\'ı N seviyeye böler')
-            params['dark_class_count'] = st.slider('En koyu kaç sınıfı pore say', 1, 
+            st.caption(T('p_multiotsu'))
+            params['n_classes'] = st.slider(T('n_classes'), 2, 6, 3, 
+                                              help=T('ps_help_multiotsu'))
+            params['dark_class_count'] = st.slider(T('darkest_classes_pore'), 1, 
                                                       params.get('n_classes',3)-1, 1)
         
         # Auto Threshold
         if 'Auto Threshold' in algo:
-            st.caption('**Otomatik Eşik** (sıfır parametre)')
-            params['method'] = st.selectbox('Yöntem', 
+            st.caption(T('auto_thresh_caption'))
+            params['method'] = st.selectbox(T('ps_method'), 
                                               ['triangle','yen','isodata','otsu','mean','minimum'],
-                                              help='triangle=histogram tepe-uzaklığı, yen=entropi, otsu=variance')
+                                              help=T('ps_help_autothresh'))
         
         # Bottom-Hat
         if 'Bottom-Hat' in algo:
-            st.caption('**Bottom-Hat Morfoloji Parametreleri**')
-            params['kernel_size'] = st.slider('Kernel boyutu (px)', 5, 81, 21, step=2)
-            params['percentile'] = st.slider('Yanıt percentile (yüksek=daha az pore)', 80, 99, 90)
+            st.caption(T('p_bottomhat'))
+            params['kernel_size'] = st.slider(T('ps_kernel_size'), 5, 81, 21, step=2)
+            params['percentile'] = st.slider(T('percentile_high_less'), 80, 99, 90)
         
         # Frangi
         if 'Frangi' in algo:
-            st.caption('**Frangi Vesselness** (uzamış/bağlantılı yapılar)')
+            st.caption(T('frangi_caption'))
             params['sigma_min'] = st.slider('σ_min', 1, 5, 1)
             params['sigma_max'] = st.slider('σ_max', 4, 20, 8)
-            params['step'] = st.slider('σ adım', 1, 4, 2)
-            params['dark'] = st.checkbox('Karanlık ridges', value=True)
-            params['percentile'] = st.slider('Yanıt percentile', 80, 99, 90)
+            params['step'] = st.slider(T('sigma_step'), 1, 4, 2)
+            params['dark'] = st.checkbox(T('dark_ridges'), value=True)
+            params['percentile'] = st.slider(T('ps_response_pct'), 80, 99, 90)
         
         # GMM
         if 'GMM' in algo:
-            st.caption('**GMM Renk Kümeleme**')
-            params['n_components'] = st.slider('Bileşen sayısı', 2, 7, 3)
-            params['dark_component_count'] = st.slider('En koyu kaç bileşeni pore say', 1, 
+            st.caption(T('ps_gmm_caption'))
+            params['n_components'] = st.slider(T('ps_n_components'), 2, 7, 3)
+            params['dark_component_count'] = st.slider(T('ps_dark_components'), 1, 
                                                           params.get('n_components',3)-1, 1)
         
         # Watershed
         if 'Watershed' in algo:
-            st.caption('**Watershed Parametreleri** (yapışık pore\'ları ayırır)')
-            params['min_distance'] = st.slider('Min mesafe (px)', 5, 50, 10,
-                                                  help='Local maxima arasındaki minimum mesafe')
-            params['base_threshold'] = st.selectbox('Kaba eşik', ['otsu','triangle','multiotsu'])
+            st.caption(T('p_watershed'))
+            params['min_distance'] = st.slider(T('ps_min_dist'), 5, 50, 10,
+                                                  help=T('ps_help_mindist'))
+            params['base_threshold'] = st.selectbox(T('ps_base_thresh'), ['otsu','triangle','multiotsu'])
         
         # SAM 2
         if 'SAM 2' in algo:
             sam_available = segmentation._check_sam2()
             if sam_available:
                 st.caption('🚀 **SAM 2 (Meta 2024)** — zero-shot foundation model')
-                params['model_name'] = st.selectbox('Model boyutu', 
-                                                      ['sam2_t.pt (39MB, hızlı)', 
+                params['model_name'] = st.selectbox(T('ps_model_size'), 
+                                                      [T('ps_sam_t'), 
                                                        'sam2_s.pt (46MB)',
-                                                       'sam2_b.pt (80MB, dengeli)',
-                                                       'sam2_l.pt (224MB, en doğru)'])
+                                                       T('ps_sam_b'),
+                                                       T('ps_sam_l')])
                 params['model_name'] = params['model_name'].split(' ')[0]
-                params['mode'] = st.selectbox('Mod', ['auto','point'])
-                st.info('İlk kullanımda model otomatik indirilir (~80MB).')
+                params['mode'] = st.selectbox(T('collage_mode'), ['auto','point'])
+                st.info(T('ps_sam_download'))
             else:
-                st.error('⚠️ SAM 2 yüklü değil.')
+                st.error(T('ps_sam_not_installed'))
                 st.code('pip install ultralytics', language='bash')
-                st.caption('Kurulumdan sonra uygulamayı yeniden başlat.')
+                st.caption(T('ps_restart_after_install'))
         
         # CellPose
         if 'CellPose' in algo:
@@ -344,71 +515,71 @@ with st.sidebar:
             if cp_available:
                 st.caption('🚀 **CellPose 3** — pretrained generalist segmenter')
                 params['model_type'] = st.selectbox('Model', ['cyto3','cyto2','nuclei'])
-                params['diameter'] = st.slider('Ortalama nesne çapı (px, 0=auto)', 0, 100, 0)
+                params['diameter'] = st.slider(T('ps_obj_diameter'), 0, 100, 0)
                 if params['diameter'] == 0: params['diameter'] = None
                 params['flow_threshold'] = st.slider('Flow threshold', 0.0, 1.0, 0.4, step=0.05)
                 params['cellprob_threshold'] = st.slider('Cell probability threshold', -6.0, 6.0, 0.0, step=0.5)
             else:
-                st.error('⚠️ CellPose yüklü değil.')
+                st.error(T('ps_cellpose_not_installed'))
                 st.code('pip install cellpose', language='bash')
-                st.caption('Kurulumdan sonra uygulamayı yeniden başlat.')
+                st.caption(T('ps_restart_after_install'))
         
         st.markdown('---')
         
         # ──────────── 4. YANLIŞ-POZİTİF FİLTRELERİ ────────────
-        st.markdown('##### 🚫 Yanlış-Pozitif Filtreleri')
+        st.markdown(T('filters_section'))
         f_params = {}
-        f_params['min_area'] = st.slider('Min pore alanı (px)', 1, 200, 8)
-        f_params['use_max_eccentricity'] = st.checkbox('Eccentricity filtresi (bantları reddet)', value=False)
+        f_params['min_area'] = st.slider(T('ps_min_pore_area'), 1, 200, 8)
+        f_params['use_max_eccentricity'] = st.checkbox(T('ps_ecc_filter'), value=False)
         if f_params['use_max_eccentricity']:
-            f_params['max_eccentricity'] = st.slider('Max eccentricity (1=çizgi, 0=daire)', 0.5, 1.0, 0.92, step=0.01)
-        f_params['use_min_solidity'] = st.checkbox('Solidity filtresi (düzensiz şekilleri reddet)', value=False)
+            f_params['max_eccentricity'] = st.slider(T('ps_max_ecc'), 0.5, 1.0, 0.92, step=0.01)
+        f_params['use_min_solidity'] = st.checkbox(T('ps_sol_filter'), value=False)
         if f_params['use_min_solidity']:
-            f_params['min_solidity'] = st.slider('Min solidity (1=konveks, 0=düzensiz)', 0.0, 1.0, 0.55, step=0.05)
-        f_params['use_max_interior_std'] = st.checkbox('Doku filtresi (fosil/mineralleri reddet)', value=False)
+            f_params['min_solidity'] = st.slider(T('ps_min_sol'), 0.0, 1.0, 0.55, step=0.05)
+        f_params['use_max_interior_std'] = st.checkbox(T('ps_texture_filter'), value=False)
         if f_params['use_max_interior_std']:
-            f_params['max_interior_std'] = st.slider('Max iç std (yüksek=dokulu, düşük=düz)', 5, 60, 25)
-        f_params['must_be_dark'] = st.checkbox('Karanlık olmalı (median altı)', value=True)
+            f_params['max_interior_std'] = st.slider(T('ps_max_interior_std'), 5, 60, 25)
+        f_params['must_be_dark'] = st.checkbox(T('must_be_dark'), value=True)
         if f_params['must_be_dark']:
-            f_params['dark_thresh_factor'] = st.slider('Karanlık eşik çarpanı', 0.5, 1.0, 0.95, step=0.05)
+            f_params['dark_thresh_factor'] = st.slider(T('ps_dark_thresh_factor'), 0.5, 1.0, 0.95, step=0.05)
         
         st.markdown('---')
         
         # ──────────── 5. PRESET ────────────
-        st.markdown('##### 💾 Preset Kaydet')
-        preset_name = st.text_input('Preset adı', value='preset_1')
-        preset_notes = st.text_area('Notlar', value='', height=60)
-        if st.button('💾 Bu parametreleri kaydet', use_container_width=True):
+        st.markdown('##### ' + T('ps_preset_save_hdr'))
+        preset_name = st.text_input(T('ps_preset_name'), value='preset_1')
+        preset_notes = st.text_area(T('ps_notes'), value='', height=60)
+        if st.button(T('save_params'), use_container_width=True):
             all_params = {'algorithm': algo, 'algo_params': params, 'filter_params': f_params,
                           'pore_color_indices': st.session_state.selected_pore_indices,
                           'custom_pore_colors': st.session_state.custom_pore_colors}
             metrics = st.session_state.last_result['metrics'] if st.session_state.last_result else None
             path = presets.save_preset(preset_name, selected_stone, algo.split(' ')[0], 
                                         all_params, metrics=metrics, notes=preset_notes)
-            st.success(f'Kaydedildi: {os.path.basename(path)}')
+            st.success(f'{T("ps_saved")}: {os.path.basename(path)}')
     
     # =============================================================
     # 🎨 RENK PALETİ — sadece palette moduna aktif
     # =============================================================
     if app_mode == 'palette':
-     with st.expander('🎨  **Renk Yelpazesi**', expanded=True):
-        st.caption('Bir görüntüden dominant renkleri çıkarır (K-means tarzı kümeleme). Sonuç JSON palet olarak kaydedilebilir veya algoritmada kullanılabilir.')
+     with st.expander(T('cp_expander_title'), expanded=True):
+        st.caption(T('cp_intro'))
         
         # Görüntü Kaynağı
-        st.markdown('##### 📂 Kaynak Görüntü')
-        pal_source = st.radio('Kaynak', 
-                                ['🖼️ Yüklü görüntüyü kullan', '📤 Yeni görüntü yükle'],
+        st.markdown('##### ' + T('cp_source_img'))
+        pal_source = st.radio(T('source'), 
+                                [T('cp_use_loaded'), T('cp_upload_new')],
                                 key='palette_source', horizontal=False)
         
         pal_image = None
-        if pal_source == '🖼️ Yüklü görüntüyü kullan':
+        if pal_source == T('cp_use_loaded'):
             if st.session_state.image_rgb is not None:
                 pal_image = st.session_state.image_rgb
-                st.caption(f'✓ Aktif görüntü: **{st.session_state.image_name}**')
+                st.caption(f'✓ {T("cp_active_img")}: **{st.session_state.image_name}**')
             else:
-                st.warning('Önce Analize Başla sekmesinden görüntü yükle.')
+                st.warning(T('cp_warn_load_first'))
         else:
-            pal_upload = st.file_uploader('Görüntü dosyası', 
+            pal_upload = st.file_uploader(T('cp_image_file'), 
                                             type=['jpg','jpeg','png','tif','tiff','bmp'],
                                             key='palette_upload')
             if pal_upload:
@@ -420,50 +591,50 @@ with st.sidebar:
         # Algoritma Ayarları
         st.markdown('##### ⚙️ Algoritma')
         pal_algo = st.selectbox(
-            'Kümeleme algoritması',
-            ['K-means (klasik)', 
-             'MiniBatch K-means (hızlı)', 
-             'GMM (probabilistik)',
-             'MeanShift (otomatik küme sayısı)',
-             'Median Cut (PIL klasik)'],
-            help='K-means en yaygın. Median Cut görüntü kuantizasyonu için klasik. MeanShift küme sayısını kendi belirler.')
+            T('clustering_algo'),
+            [T('cp_algo_kmeans'), 
+             T('cp_algo_minibatch'), 
+             T('cp_algo_gmm'),
+             T('cp_algo_meanshift'),
+             T('cp_algo_mediancut')],
+            help=T('cp_help_algo'))
         algo_map = {
-            'K-means (klasik)': 'kmeans',
-            'MiniBatch K-means (hızlı)': 'minibatch_kmeans',
-            'GMM (probabilistik)': 'gmm',
-            'MeanShift (otomatik küme sayısı)': 'meanshift',
-            'Median Cut (PIL klasik)': 'median_cut',
+            T('cp_algo_kmeans'): 'kmeans',
+            T('cp_algo_minibatch'): 'minibatch_kmeans',
+            T('cp_algo_gmm'): 'gmm',
+            T('cp_algo_meanshift'): 'meanshift',
+            T('cp_algo_mediancut'): 'median_cut',
         }
         pal_algo_id = algo_map[pal_algo]
         
         if pal_algo_id != 'meanshift':
-            pal_n = st.slider('Renk sayısı', 3, 15, 7, 
-                                help='Görüntüden çıkarılacak dominant renk adedi')
+            pal_n = st.slider(T('n_colors'), 3, 15, 7, 
+                                help=T('cp_help_ncolors'))
         else:
             pal_n = None
         
         pal_space = st.selectbox(
-            'Renk uzayı',
-            ['Lab (perceptual - önerilen)', 'RGB', 'HSV'],
-            help='Lab insan görüşüne yakın; RGB doğrudan; HSV hue/saturation ayrımı için iyi.')
+            T('color_space'),
+            [T('cp_space_lab'), 'RGB', 'HSV'],
+            help=T('cp_help_space'))
         space_map = {
-            'Lab (perceptual - önerilen)': 'lab',
+            T('cp_space_lab'): 'lab',
             'RGB': 'rgb',
             'HSV': 'hsv',
         }
         pal_space_id = space_map[pal_space]
         
         pal_sample = st.select_slider(
-            'Örnekleme boyutu (hız)',
-            options=[5000, 10000, 30000, 50000, 100000, 'Tümü'],
+            T('cp_sample_size'),
+            options=[5000, 10000, 30000, 50000, 100000, T('cp_all')],
             value=30000,
-            help='Büyük görüntülerde sub-sampling hızı artırır')
-        pal_sample_n = pal_image.shape[0]*pal_image.shape[1] if pal_sample == 'Tümü' and pal_image is not None else (pal_sample if pal_sample != 'Tümü' else 50000)
+            help=T('cp_help_sample'))
+        pal_sample_n = pal_image.shape[0]*pal_image.shape[1] if pal_sample == T('cp_all') and pal_image is not None else (pal_sample if pal_sample != T('cp_all') else 50000)
         
         # Hesapla Butonu
         if pal_image is not None:
-            if st.button('🎨 Paleti Hesapla', use_container_width=True, type='primary'):
-                with st.spinner('Hesaplanıyor...'):
+            if st.button(T('cp_compute_btn'), use_container_width=True, type='primary'):
+                with st.spinner(T('computing')):
                     try:
                         result = segmentation.extract_palette(
                             pal_image,
@@ -479,16 +650,16 @@ with st.sidebar:
                             'sample_size': pal_sample,
                             'source_image': getattr(st.session_state, 'palette_source_name', st.session_state.image_name or 'unknown'),
                         }
-                        st.success(f'✓ {len(result)} renk çıkarıldı')
+                        st.success(f'✓ {len(result)} ' + T('cp_colors_extracted'))
                     except Exception as e:
-                        st.error(f'Hata: {e}')
+                        st.error(f'{T("err_generic")}: {e}')
         else:
-            st.info('Devam etmek için bir görüntü yükle.')
+            st.info(T('cp_info_load'))
         
         # Kompakt Sonuç
         if 'computed_palette' in st.session_state and st.session_state.get('computed_palette'):
             st.markdown('---')
-            st.markdown('##### 🎨 Çıkarılan Palet')
+            st.markdown('##### ' + T('cp_extracted_palette'))
             
             for i, c in enumerate(st.session_state.computed_palette):
                 cols = st.columns([0.5, 1.5, 3, 1])
@@ -498,15 +669,15 @@ with st.sidebar:
                 cols[2].caption(f'`{c["hex"]}` (RGB {tuple(c["rgb"])})')
                 cols[3].caption(f'{c["fraction_pct"]:.1f}%')
             
-            st.caption('💡 Detaylı görselleştirme ve indirme seçenekleri için ana panele bak.')
+            st.caption(T('cp_detail_hint'))
             
             # Aksiyon Butonları
             st.markdown('---')
             ac1, ac2 = st.columns(2)
             with ac1:
-                pal_save_code = st.text_input('Taş kodu (opsiyonel)', value='CUSTOM', 
-                                                 help='Bu paleti hangi taş için kaydet?')
-                if st.button('💾 JSON kaydet', use_container_width=True):
+                pal_save_code = st.text_input(T('cp_stone_code_opt'), value='CUSTOM', 
+                                                 help=T('cp_help_save_code'))
+                if st.button(T('cp_json_save'), use_container_width=True):
                     palette_data = {
                         'stone_code': pal_save_code,
                         'stone_name': st.session_state.computed_palette_meta.get('source_image', 'Custom'),
@@ -516,10 +687,10 @@ with st.sidebar:
                         'pore_candidate_indices': [0, 1] if len(st.session_state.computed_palette) >= 2 else [0],
                     }
                     saved_path = palettes.save_palette(pal_save_code, palette_data)
-                    st.success(f'✓ Kaydedildi: {os.path.basename(saved_path)}')
+                    st.success(f'✓ {T("ps_saved")}: {os.path.basename(saved_path)}')
             with ac2:
-                if st.button('🔗 Aktif palet yap', use_container_width=True,
-                              help='Bu paleti Analize Başla sekmesinde aktif et'):
+                if st.button(T('cp_make_active'), use_container_width=True,
+                              help=T('cp_help_make_active')):
                     st.session_state.palette_data = {
                         'stone_code': 'COMPUTED',
                         'stone_name': st.session_state.computed_palette_meta.get('source_image', 'Custom'),
@@ -529,72 +700,70 @@ with st.sidebar:
                         'pore_candidate_indices': [0, 1] if len(st.session_state.computed_palette) >= 2 else [0],
                     }
                     st.session_state.selected_pore_indices = [0, 1]
-                    st.success('Bu palet Analize Başla sekmesinde aktif edildi')
+                    st.success(T('cp_activated'))
                     st.rerun()
     
         # =============================================================
     # 🔄 YAŞLANDIRMA ANALİZİ — sadece aging moduna aktif
     # =============================================================
     if app_mode == 'aging':
-     with st.expander('🔄  **Aging Analizi (Pre/Post)**', expanded=True):
-        st.caption('Yaşlandırma deneyi öncesi/sonrası yüzey renk değişimini ölçer (TS EN 15886 + CIEDE2000)')
+     with st.expander(T('aging_sidebar_title'), expanded=True):
+        st.caption(T('ag_intro'))
         
         # ─── Mod Seçici ───
         aging_mode = st.radio(
-            'Karşılaştırma Modu',
-            ['🪞 Tek-çift (1 pre + 1 post)', '🔢 Çoklu numune (N pre + N post)'],
+            T('aging_compare_mode'),
+            [T('aging_mode_single'), T('aging_mode_multi')],
             key='aging_mode', horizontal=False)
         
         st.markdown('---')
-        st.markdown('##### 📤 Deney Öncesi Görüntüleri')
+        st.markdown(T('pre_images_section'))
         pre_files = st.file_uploader(
             'Pre-test', accept_multiple_files=True,
             type=['jpg','jpeg','png','tif','tiff','bmp'],
             key='aging_pre_files', label_visibility='collapsed')
         if pre_files:
-            st.caption(f'✓ {len(pre_files)} pre-test görüntüsü')
+            st.caption(f'✓ {len(pre_files)} ' + T('ag_pretest_imgs'))
         
-        st.markdown('##### 📤 Deney Sonrası Görüntüleri')
+        st.markdown(T('post_images_section'))
         post_files = st.file_uploader(
             'Post-test', accept_multiple_files=True,
             type=['jpg','jpeg','png','tif','tiff','bmp'],
             key='aging_post_files', label_visibility='collapsed')
         if post_files:
-            st.caption(f'✓ {len(post_files)} post-test görüntüsü')
+            st.caption(f'✓ {len(post_files)} ' + T('ag_posttest_imgs'))
         
         # Eşitlik kontrolü
         n_pre = len(pre_files) if pre_files else 0
         n_post = len(post_files) if post_files else 0
         if n_pre and n_post:
             if n_pre != n_post:
-                st.error(f'⚠️ Eşit sayı gerekli: {n_pre} pre vs {n_post} post')
+                st.error(f'⚠️ ' + T('ag_equal_required') + f': {n_pre} pre vs {n_post} post')
             else:
-                st.success(f'✓ {n_pre} pre + {n_post} post = {n_pre} eşleştirilecek çift')
+                st.success(T('pairs_ready_template').format(npre=n_pre, npost=n_post, npairs=n_pre))
         
         # Mode tutarlılık
-        if aging_mode.startswith('🪞 Tek-çift') and (n_pre > 1 or n_post > 1):
-            st.warning('Tek-çift modunda 1\'er görüntü yükle. Daha fazlası varsa Çoklu moda geç.')
+        if aging_mode.startswith('🪞') and (n_pre > 1 or n_post > 1):
+            st.warning(T('single_mode_warn'))
         
         st.markdown('---')
         
         # ─── Eşleştirme Stratejisi ───
-        st.markdown('##### 🔗 Eşleştirme Stratejisi')
+        st.markdown(T('pair_strategy_section'))
         pair_strategy = st.radio(
-            'Strateji',
-            ['🔤 Otomatik — alfabetik (dosya adına göre)',
-             '🔢 Otomatik — yükleme sırası (1.pre ↔ 1.post)',
-             '✋ Manuel eşleştirme (tablo)'],
+            T('pair_strategy_label'),
+            [T('pair_opt_alpha'), T('pair_opt_order'), T('pair_opt_manual')],
             key='aging_pair_strategy', label_visibility='collapsed')
         
         # Manuel eşleştirme tablosu (eğer seçilmişse)
         manual_pairs = None
-        if pair_strategy.startswith('✋ Manuel') and n_pre and n_post and n_pre == n_post:
-            st.caption('Her pre-test için karşılık gelen post-test\'i seç:')
+        if pair_strategy.startswith('✋') and n_pre and n_post and n_pre == n_post:
+            st.caption(T('pair_manual_caption'))
             manual_pairs = []
             post_names = [p.name for p in post_files]
             for i, pre_f in enumerate(pre_files):
                 selected = st.selectbox(
-                    f'**{pre_f.name}** eşleşir:', post_names,
+                    f'**{pre_f.name}** ' + T('pair_manual_match_prefix') + ':', post_names,
                     index=i if i < len(post_names) else 0,
                     key=f'aging_manual_{i}')
                 post_idx = post_names.index(selected)
@@ -603,33 +772,32 @@ with st.sidebar:
         st.markdown('---')
         
         # ─── Analiz Parametreleri ───
-        st.markdown('##### ⚙️ Analiz Parametreleri')
+        st.markdown(T('analysis_params'))
         delta_e_method = st.selectbox(
-            'ΔE metriği',
-            ['ΔE-2000 (modern, önerilen)', 'ΔE-94 (CIE 1994)', 'ΔE-76 (CIE 1976, klasik)'],
+            T('dE_metric_label'),
+            [T('dE_2000_opt'), T('dE_94_opt'), T('dE_76_opt')],
             key='aging_de_method')
         de_method_id = '2000' if '2000' in delta_e_method else ('94' if '94' in delta_e_method else '76')
         
         analysis_depth = st.radio(
-            'Analiz Derinliği',
-            ['📊 Standart (mean color + ΔE + istatistik)',
-             '🔬 Detaylı (+ uniformity karşılaştırması)'],
+            T('analysis_depth_label'),
+            [T('depth_standard'), T('depth_detailed')],
             key='aging_depth', label_visibility='collapsed')
         
         sample_px = st.select_slider(
-            'Pixel örnekleme boyutu',
+            T('pixel_sample_size'),
             options=[5000, 10000, 20000, 50000, 100000],
             value=20000, key='aging_sample_size')
         
         # ─── Bilgilendirme ───
         if n_pre and n_post and n_pre == n_post:
             est_time = n_pre * 1.5  # ~1.5 sn/pair (CPU)
-            st.info(f'⏱️ Tahmini süre: ~{est_time:.0f}s ({n_pre} numune)')
+            st.info(T('estimated_time_template').format(secs=est_time, n=n_pre))
         
         # ─── Run Button ───
         if n_pre > 0 and n_post > 0 and n_pre == n_post:
-            if st.button('🔬 Karşılaştırma Analizini Çalıştır', use_container_width=True, type='primary', key='aging_run'):
-                with st.spinner(f'{n_pre} çift karşılaştırılıyor...'):
+            if st.button(T('ag_run_btn'), use_container_width=True, type='primary', key='aging_run'):
+                with st.spinner(f'{n_pre} ' + T('ag_comparing')):
                     # Pairing
                     pre_buffers = list(pre_files)
                     post_buffers = list(post_files)
@@ -661,7 +829,7 @@ with st.sidebar:
                             result['post_file'] = post_f.name
                             pair_results.append(result)
                         except Exception as e:
-                            st.warning(f'{pre_f.name} işlenirken hata: {e}')
+                            st.warning(f'{pre_f.name} ' + T('ag_processing_error') + f': {e}')
                         progress.progress((i+1)/len(pairs))
                     
                     # Aggregate + statistics
@@ -676,63 +844,63 @@ with st.sidebar:
                             'depth': analysis_depth,
                             'method': delta_e_method,
                         }
-                        st.success(f'✓ {len(pair_results)} çift analiz edildi. Detaylar ana panelde.')
+                        st.success(f'✓ {len(pair_results)} ' + T('ag_analyzed'))
         else:
-            st.info('Eşit sayıda pre ve post görüntü yükleyince butona tıklayabilirsin.')
+            st.info(T('ag_info_equal'))
     
         # =============================================================
     # 🖼️ KOLAJ OLUŞTURUCU — sadece collage moduna aktif
     # =============================================================
     if app_mode == 'collage':
-     with st.expander('🖼️  **Kolaj Oluşturucu**', expanded=True):
-        st.caption('Q1 dergi standardında figür kolajı üret (PNG/PDF/SVG/TIFF)')
+     with st.expander(T('collage_mode_title'), expanded=True):
+        st.caption(T('cb_intro'))
         
         # Mod seçimi
         st.markdown('##### 📋 Kolaj Modu')
-        collage_mode = st.radio('Mod', 
-            ['🅰️ Manuel (sıfırdan)', 
-             '🅱️ Quick (Aging sonuçlarından)',
-             '🅲️ Template (hazır şablon)'],
+        collage_mode = st.radio(T('collage_mode'), 
+            [T('cb_mode_manual'), 
+             T('cb_mode_quick'),
+             T('cb_mode_template')],
             key='collage_mode', label_visibility='collapsed')
         
         st.markdown('---')
         
         # Grid boyutu
-        st.markdown('##### 📐 Grid Boyutu')
+        st.markdown('##### ' + T('cb_grid_size'))
         gc1, gc2 = st.columns(2)
-        n_rows = gc1.number_input('Satır', 1, 20, 3, key='collage_rows')
-        n_cols = gc2.number_input('Sütun', 1, 12, 2, key='collage_cols')
+        n_rows = gc1.number_input(T('rows'), 1, 20, 3, key='collage_rows')
+        n_cols = gc2.number_input(T('cols'), 1, 12, 2, key='collage_cols')
         
         # Görüntü yükleme
         st.markdown('---')
-        st.markdown('##### 📤 Görüntüler')
+        st.markdown('##### ' + T('cb_images_hdr'))
         if collage_mode.startswith('🅰️'):
             bulk_imgs = st.file_uploader(
-                'Toplu yükle (alfabetik sıraya göre dağıt)',
+                T('cb_bulk_upload'),
                 accept_multiple_files=True,
                 type=['jpg','jpeg','png','tif','tiff','bmp'],
                 key='collage_bulk_upload')
             if bulk_imgs:
-                st.caption(f'✓ {len(bulk_imgs)} görüntü ({n_rows*n_cols} hücre)')
+                st.caption(f'✓ {len(bulk_imgs)} ' + T('cb_images_word') + f' ({n_rows*n_cols} ' + T('cb_cells_word') + ')')
                 if len(bulk_imgs) != n_rows * n_cols:
-                    st.warning(f'⚠️ {n_rows}×{n_cols}={n_rows*n_cols} hücre, {len(bulk_imgs)} yükledin')
+                    st.warning(f'⚠️ {n_rows}×{n_cols}={n_rows*n_cols} ' + T('cb_cells_word') + f', {len(bulk_imgs)} ' + T('cb_uploaded_word'))
         elif collage_mode.startswith('🅱️'):
             if 'aging_results' in st.session_state and st.session_state.aging_results:
                 ar = st.session_state.aging_results
-                st.success(f'✓ Aging sonucu hazır: {len(ar["pairs"])} çift')
-                st.caption('Grid otomatik olarak pre/post 2-sütun düzenine geçer')
+                st.success(f'✓ ' + T('cb_aging_ready') + f': {len(ar["pairs"])} ' + T('cb_pairs_word'))
+                st.caption(T('cb_grid_auto'))
             else:
-                st.warning('Önce Yaşlandırma Analizi sekmesinden bir analiz çalıştır')
+                st.warning(T('cb_warn_run_aging'))
         else:  # Template
-            template = st.selectbox('Şablon',
-                ['Algoritma karşılaştırma (orig + N alg)',
-                 'Pre/Post yaşlandırma (6 örnek × pre+post)',
-                 'Stone × Salt matriks (4×4)',
+            template = st.selectbox(T('cb_template_label'),
+                [T('cb_tpl_algo'),
+                 T('cb_tpl_aging'),
+                 T('cb_tpl_matrix'),
                  'Time series (cycle 0/5/10/15)'],
                 key='collage_template')
-            st.caption('Şablon seçtikten sonra görüntüleri sırayla yükle')
+            st.caption(T('cb_tpl_hint'))
             bulk_imgs = st.file_uploader(
-                'Görüntüler',
+                T('cb_images_label'),
                 accept_multiple_files=True,
                 type=['jpg','jpeg','png','tif','tiff','bmp'],
                 key='collage_template_upload')
@@ -740,15 +908,15 @@ with st.sidebar:
         st.markdown('---')
         
         # Etiket içeriği — multi-select (hepsi default seçili)
-        st.markdown('##### 🏷️ Etiket İçeriği')
-        st.caption('Hangi metrikler etiket olarak gözüksün?')
-        label_opts = st.multiselect('Metrikler',
-            ['Sample ID', 'Algoritma %', 'Deneysel %', 'ΔE-2000', 'Pore sayısı', 'Mean color hex', 'Custom text'],
-            default=['Sample ID', 'Algoritma %', 'Deneysel %'],
+        st.markdown('##### ' + T('cb_label_content'))
+        st.caption(T('cb_label_which'))
+        label_opts = st.multiselect(T('cb_metrics'),
+            ['Sample ID', T('cb_opt_algo_pct'), T('cb_opt_exp_pct'), 'ΔE-2000', T('cb_opt_pore_count'), 'Mean color hex', 'Custom text'],
+            default=['Sample ID', T('cb_opt_algo_pct'), T('cb_opt_exp_pct')],
             key='collage_label_opts')
         
         label_format = st.text_input(
-            'Etiket format şablonu',
+            T('cb_label_fmt'),
             value='Alg:{alg:.1f}% | Exp:{exp:.1f}%',
             key='collage_label_fmt',
             help='Python format: {alg}, {exp}, {de}, {pore_n}, {hex}, {sample_id}, {custom}')
@@ -756,113 +924,113 @@ with st.sidebar:
         st.markdown('---')
         
         # Etiket pozisyonu
-        st.markdown('##### 📍 Etiket Pozisyonu')
-        label_pos = st.selectbox('Pozisyon',
+        st.markdown('##### ' + T('cb_label_pos_hdr'))
+        label_pos = st.selectbox(T('cb_position'),
             ['inside_bottom_center',
              'inside_bottom_left', 'inside_bottom_right',
              'inside_top_center', 'inside_top_left', 'inside_top_right',
-             'outside_bottom (SEM tarzı, beyaz alanda)',
-             'outside_top (üst beyaz şerit)',
-             'outside_left (sol beyaz şerit)',
-             'outside_right (sağ beyaz şerit)',
-             'none (etiket yok)'],
+             T('cb_pos_outside_bottom'),
+             T('cb_pos_outside_top'),
+             T('cb_pos_outside_left'),
+             T('cb_pos_outside_right'),
+             T('cb_pos_none')],
             key='collage_label_pos',
-            help='Inside = görsel üzerinde banner. Outside = SEM tarzı, görsel dışında beyaz alanda')
+            help=T('cb_help_pos'))
         # Position string clean
         label_pos_clean = label_pos.split(' ')[0]
         
         # Stil
         st.markdown('---')
-        st.markdown('##### 🎨 Stil')
+        st.markdown(T('overlay_style'))
         sc1, sc2 = st.columns(2)
-        label_bg = sc1.color_picker('Etiket arka plan', '#dc1e1e', key='collage_lbl_bg')
-        label_tc = sc2.color_picker('Etiket yazı rengi', '#ffffff', key='collage_lbl_tc')
+        label_bg = sc1.color_picker(T('cb_label_bg'), '#dc1e1e', key='collage_lbl_bg')
+        label_tc = sc2.color_picker(T('cb_label_tc'), '#ffffff', key='collage_lbl_tc')
         # Yazı boyutu — auto-scale veya manuel preset
         font_mode = st.selectbox(
-            '🔤 Yazı Boyutu',
-            ['🎯 Auto (cell boyutuna oranlı, önerilen)',
-             '🔹 Küçük',
-             '🔸 Orta',
-             '🔶 Büyük',
-             '⚙️ Custom (manuel slider)'],
+            T('cb_font_size_label'),
+            [T('cb_font_auto'),
+             T('cb_font_small'),
+             T('cb_font_medium'),
+             T('cb_font_large'),
+             T('cb_font_custom')],
             key='collage_font_mode',
-            help='Auto: render boyutu büyüdükçe yazılar otomatik orantılı büyür (Q1 dergiler için optimum).')
+            help=T('cb_help_font'))
         if font_mode.startswith('⚙️'):
-            font_sz = st.slider('Etiket font (px)', 8, 96, 20, key='collage_font_sz_manual')
+            font_sz = st.slider(T('cb_font_px'), 8, 96, 20, key='collage_font_sz_manual')
         else:
             font_sz = None  # auto hesap render zamani
-        cell_spc = st.slider('Hücre arası boşluk (px)', 0, 30, 6, key='collage_spc')
+        cell_spc = st.slider(T('cb_cell_spacing'), 0, 30, 6, key='collage_spc')
         
         # ─── HÜCRE BOYUTU (çözünürlük) ───
         st.markdown('---')
-        st.markdown('##### 🖼️ Hücre Çözünürlüğü')
+        st.markdown('##### ' + T('cb_cell_res_hdr'))
         auto_cell = st.checkbox(
-            '🎯 Auto-fit (dergi boyutu × DPI\'ya göre otomatik)', 
+            T('cb_autofit'), 
             value=True, key='collage_auto_cell',
-            help='AÇIK: hücre boyutu hedef genişlik ve sütun sayısından hesaplanır → tam DPI uyumu. KAPALI: manuel seç.')
+            help=T('cb_help_autofit'))
         if not auto_cell:
             cell_size_px = st.slider(
-                'Hücre boyutu (px)', 200, 1200, 600, step=50,
+                T('cb_cell_size'), 200, 1200, 600, step=50,
                 key='collage_cell_size_manual',
-                help='Yüksek = daha keskin görüntü, daha büyük dosya. 600+ önerilir akademik kalite için.')
+                help=T('cb_help_cellsize'))
         else:
             cell_size_px = None  # auto
         
         # Sütun başlıkları
         st.markdown('---')
-        st.markdown('##### 📝 Sütun & Satır Başlıkları')
+        st.markdown('##### ' + T('cb_headers_hdr'))
         col_headers_str = st.text_input(
-            f'Sütun başlıkları ({n_cols} adet, virgülle)',
+            T('cb_col_headers').format(n=n_cols),
             value=','.join([f'Col{i+1}' for i in range(n_cols)]),
             key='collage_col_headers')
         row_labels_str = st.text_input(
-            f'Satır etiketleri ({n_rows} adet, virgülle, boş bırak)',
+            T('cb_row_labels').format(n=n_rows),
             value='',
             key='collage_row_labels')
         
         # Çıktı boyut + format
         st.markdown('---')
-        st.markdown('##### 📐 Çıktı Boyutu (Akademik Standart)')
-        journal_preset = st.selectbox('Dergi presetı',
+        st.markdown('##### ' + T('cb_output_size_hdr'))
+        journal_preset = st.selectbox(T('cb_journal_preset'),
             ['Custom',
-             'Elsevier tek-sütun (8.5 cm)',
-             'Elsevier çift-sütun (17.5 cm)',
-             'Springer tek-sütun (8.4 cm)',
-             'Springer çift-sütun (17.4 cm)',
-             'ACS tek-sütun (8.25 cm)',
-             'ACS çift-sütun (17.78 cm)'],
+             T('jp_elsevier_single'),
+             T('jp_elsevier_double'),
+             T('jp_springer_single'),
+             T('jp_springer_double'),
+             T('jp_acs_single'),
+             T('jp_acs_double')],
             key='collage_journal')
         
         width_cm_map = {
             'Custom': None,
-            'Elsevier tek-sütun (8.5 cm)': 8.5,
-            'Elsevier çift-sütun (17.5 cm)': 17.5,
-            'Springer tek-sütun (8.4 cm)': 8.4,
-            'Springer çift-sütun (17.4 cm)': 17.4,
-            'ACS tek-sütun (8.25 cm)': 8.25,
-            'ACS çift-sütun (17.78 cm)': 17.78,
+            T('jp_elsevier_single'): 8.5,
+            T('jp_elsevier_double'): 17.5,
+            T('jp_springer_single'): 8.4,
+            T('jp_springer_double'): 17.4,
+            T('jp_acs_single'): 8.25,
+            T('jp_acs_double'): 17.78,
         }
         target_w_cm = width_cm_map[journal_preset]
         if target_w_cm is None:
-            target_w_cm = st.number_input('Custom genişlik (cm)', 5.0, 30.0, 17.5, 0.5, key='collage_custom_w')
+            target_w_cm = st.number_input(T('cb_custom_width'), 5.0, 30.0, 17.5, 0.5, key='collage_custom_w')
         
         dpi = st.selectbox('DPI', [72, 150, 300, 600], index=2, key='collage_dpi',
-            help='72=web, 150=print preview, 300=print (standart), 600=ultra')
+            help=T('cb_help_dpi'))
         
         # Footer (watermark) — opsiyonel
         st.markdown('---')
-        show_footer = st.checkbox('Footer ekle (watermark/atıf)', value=True, key='collage_footer_show')
+        show_footer = st.checkbox(T('cb_footer_add'), value=True, key='collage_footer_show')
         footer_text = ''
         if show_footer:
             footer_text = st.text_input(
-                'Footer metni',
-                value='Generated by Gözenek ve Renk Tespit Yazılımı v1.0 (Sert et al. 2026)',
+                T('cb_footer_text'),
+                value=T('cb_footer_default'),
                 key='collage_footer_text')
         
         st.markdown('---')
         # Render butonu
-        if st.button('🎨 Kolajı Oluştur', use_container_width=True, type='primary', key='collage_render'):
-            with st.spinner('Kolaj oluşturuluyor...'):
+        if st.button(T('cb_render_btn'), use_container_width=True, type='primary', key='collage_render'):
+            with st.spinner(T('cb_rendering')):
                 try:
                     # Cells oluştur
                     cells_2d = []
@@ -886,7 +1054,7 @@ with st.sidebar:
                         st.session_state.collage_grid_override = True
                         # TODO: file source for aging — pairs have BytesIO from session
                         # For now, prepare cells with placeholders
-                        st.warning('Quick mode: Aging görüntü kaynakları sidebar\'da BytesIO olarak tutulmuyor; manuel modda yükle.')
+                        st.warning(T('cb_quick_warn'))
                         cells_2d = []
                     elif collage_mode.startswith('🅲️') and bulk_imgs:
                         sorted_imgs = sorted(bulk_imgs, key=lambda f: f.name)
@@ -903,7 +1071,7 @@ with st.sidebar:
                             cells_2d.append(row)
                     
                     if not cells_2d:
-                        st.error('Görüntü yüklenmedi.')
+                        st.error(T('cb_no_image'))
                     else:
                         # Headers
                         col_h = [h.strip() for h in col_headers_str.split(',')] if col_headers_str.strip() else None
@@ -933,15 +1101,15 @@ with st.sidebar:
                             label_fs = max(14, int(cw_actual * 0.045))
                             header_fs = max(16, int(cw_actual * 0.055))
                             footer_fs = max(10, int(cw_actual * 0.022))
-                        elif font_mode == '🔹 Küçük':
+                        elif font_mode == T('cb_font_small'):
                             label_fs = max(12, int(cw_actual * 0.035))
                             header_fs = max(14, int(cw_actual * 0.045))
                             footer_fs = max(9, int(cw_actual * 0.018))
-                        elif font_mode == '🔸 Orta':
+                        elif font_mode == T('cb_font_medium'):
                             label_fs = max(16, int(cw_actual * 0.055))
                             header_fs = max(20, int(cw_actual * 0.07))
                             footer_fs = max(11, int(cw_actual * 0.026))
-                        elif font_mode == '🔶 Büyük':
+                        elif font_mode == T('cb_font_large'):
                             label_fs = max(22, int(cw_actual * 0.075))
                             header_fs = max(28, int(cw_actual * 0.09))
                             footer_fs = max(14, int(cw_actual * 0.032))
@@ -976,20 +1144,128 @@ with st.sidebar:
                             'auto_fit': cell_size_px is None,
                             'context': 'algorithm_comparison',
                         }
-                        st.success(f'✓ Kolaj oluşturuldu: {collage.size}')
+                        st.success(f'✓ ' + T('cb_collage_built') + f': {collage.size}')
                 
                 except Exception as e:
-                    st.error(f'Hata: {e}')
+                    st.error(f'{T("err_generic")}: {e}')
                     import traceback
                     st.code(traceback.format_exc())
     
         st.markdown('---')
+
+    # =============================================================
+    # 🆚 KARŞILAŞTIRMA KOLAJI — sadece collage modunda
+    # =============================================================
+    if app_mode == 'collage':
+        with st.expander(T('cb_cmp_title'), expanded=False):
+            st.caption(T('cb_cmp_caption'))
+            _itypes = ['jpg','jpeg','png','tif','tiff','bmp']
+            cmp_before = st.file_uploader(T('cb_cmp_before'), accept_multiple_files=True,
+                                          type=_itypes, key='cmp_before')
+            cmp_after = st.file_uploader(T('cb_cmp_after'), accept_multiple_files=True,
+                                         type=_itypes, key='cmp_after')
+            cmp_methods = st.multiselect(T('cb_cmp_methods'), comp.available_methods(),
+                                         default=comp.available_methods()[:2], key='cmp_methods')
+            cmp_cell = st.slider(T('cb_cmp_cell'), 200, 800, 420, step=20, key='cmp_cell')
+            cmp_ref_on = st.checkbox(T('cb_cmp_use_ref'), value=False, key='cmp_ref_on')
+            cmp_ref_text = ''
+            if cmp_ref_on:
+                cmp_ref_text = st.text_area(T('cb_cmp_ref'), value='', height=110, key='cmp_ref_text',
+                                            help='KT-A1: 4.75, 4.58')
+            _cs1, _cs2 = st.columns(2)
+            cmp_hdrfs = _cs1.slider(T('cb_cmp_hdr_fs'), 12, 40, 23, key='cmp_hdrfs')
+            cmp_lblfs = _cs2.slider(T('cb_cmp_lbl_fs'), 10, 36, 21, key='cmp_lblfs')
+            cmp_vert = st.checkbox(T('cb_cmp_vertical'), value=True, key='cmp_vert')
+            cmp_colors = {}
+            if cmp_methods:
+                st.caption(T('cb_cmp_colors'))
+                _mcols = st.columns(min(len(cmp_methods), 4))
+                for _i, _m in enumerate(cmp_methods):
+                    _dflt = '#%02x%02x%02x' % comp.method_color(_m)
+                    _hx = _mcols[_i % len(_mcols)].color_picker(_m, _dflt, key=f'cmp_color_{_m}')
+                    cmp_colors[_m] = tuple(int(_hx[_j:_j+2], 16) for _j in (1, 3, 5))
+            if st.button(T('cb_cmp_build'), use_container_width=True, type='primary', key='cmp_build'):
+                if not cmp_before:
+                    st.warning(T('cb_cmp_need_before'))
+                elif not cmp_methods:
+                    st.warning(T('cb_cmp_need_method'))
+                else:
+                    with st.spinner(T('cb_cmp_running')):
+                        try:
+                            bef = sorted(cmp_before, key=lambda f: f.name)
+                            aft = sorted(cmp_after, key=lambda f: f.name) if cmp_after else []
+                            refmap = {}
+                            for line in cmp_ref_text.splitlines():
+                                line = line.strip()
+                                if not line or ':' not in line:
+                                    continue
+                                sid, rest = line.split(':', 1)
+                                parts = [x.strip() for x in rest.replace(';', ',').split(',') if x.strip()]
+                                rb = ra = None
+                                try:
+                                    if len(parts) >= 1: rb = float(parts[0])
+                                    if len(parts) >= 2: ra = float(parts[1])
+                                except ValueError:
+                                    rb = ra = None
+                                refmap[sid.strip()] = {'before': rb, 'after': ra}
+                            conds = ['before', 'after'] if aft else ['before']
+                            n = len(bef) if not aft else min(len(bef), len(aft))
+                            samples = []
+                            for i in range(n):
+                                raw_id = bef[i].name.rsplit('.', 1)[0]
+                                sid = raw_id.split('_')[0]
+                                rec = refmap.get(sid) or refmap.get(raw_id) or {}
+                                condd = {'before': {'image': bef[i], 'exp': rec.get('before')}}
+                                if aft:
+                                    condd['after'] = {'image': aft[i], 'exp': rec.get('after')}
+                                samples.append({'id': sid[:18], 'conditions': condd})
+                            prog = st.progress(0.0)
+                            def _pcb(done, total):
+                                prog.progress(min(1.0, done / max(1, total)))
+                            collage = comp.build_comparison_collage(
+                                samples, methods=cmp_methods, condition_keys=tuple(conds),
+                                condition_labels={'before': 'Before', 'after': 'After'},
+                                cell_size=(cmp_cell, cmp_cell),
+                                label_font_size=cmp_lblfs, header_font_size=cmp_hdrfs,
+                                row_label_vertical=cmp_vert, method_colors=cmp_colors,
+                                progress_cb=_pcb)
+                            st.session_state.collage_result = collage
+                            st.session_state.collage_meta = {
+                                'rows': len(samples),
+                                'cols': len(conds) * (1 + len(cmp_methods)),
+                                'cell_size_px': cmp_cell, 'auto_fit': False,
+                                'target_w_cm': 17.5, 'dpi': 300,
+                                'source_image': 'comparison', 'context': 'comparison',
+                                'col_headers': None,
+                            }
+                            st.success('✓ ' + T('cb_collage_built') + f': {collage.size}')
+                        except Exception as e:
+                            st.error(f'{T("err_generic")}: {e}')
+                            import traceback
+                            st.code(traceback.format_exc())
+
     # =============================================================
     # ⚙️ AYARLAR ve HAKKINDA — her modda görünür
     # =============================================================
-    with st.expander('⚙️  **Ayarlar**', expanded=False):
-        st.caption('🚧 Bu bölüm geliştirme aşamasındadır.')
-        st.markdown("""
+    with st.expander(T('set_title'), expanded=False):
+        st.caption(T('set_wip'))
+        if st.session_state.get('lang','en') == 'en':
+            st.markdown("""
+        **Planned features:**
+        - 🌍 Language selection (TR / EN / DE)
+        - 🎨 Appearance theme (Light / Dark)
+        - 📏 Pixel scale (mm/px) — preset per camera/zoom
+        - 💾 Default output folder
+        - 📤 Batch processing (192 images → one click)
+        - 🔄 Default algorithm & parameters
+        - 📊 CSV separator preference (`,` vs `;`)
+        - 🌐 Configuration sharing (.json export/import)
+        - 🔬 Custom palette loading (your own colors.xlsx files)
+        - 📐 Scale bar overlay
+        - 🎯 IoU/Dice metric computation (with ground truth)
+        """)
+        else:
+            st.markdown("""
         **Planlanan özellikler:**
         - 🌍 Dil seçimi (TR / EN / DE)
         - 🎨 Görünüm teması (Light / Dark)
@@ -1004,36 +1280,64 @@ with st.sidebar:
         - 🎯 IoU/Dice metrik hesaplama (ground truth ile)
         """)
         st.markdown('---')
-        st.caption('Özellik önerin mi var? GitHub issue aç veya e-posta gönder.')
+        st.caption(T('set_feedback'))
     
     # =============================================================
     # ℹ️ HAKKINDA — bilim insanları için yardımcı bilgiler
     # =============================================================
-    with st.expander('ℹ️  **Hakkında & Atıf**', expanded=False):
-        st.markdown("""
-        **Gözenek ve Renk Tespit Yazılımı v1.0**
-        
-        Travertenler ve benzer doğal yapı taşlarının yüzey gözenekliliğini  
-        görüntü işleme teknikleriyle tespit eden açık kaynak araç.
-        
+    with st.expander(T('about_title'), expanded=False):
+        if st.session_state.get('lang','en') == 'en':
+            st.markdown("""
+        **Pore Segmentation Suite v1.2**
+
+        An open-source tool that detects the surface porosity of travertines and
+        similar natural building stones using image processing techniques.
+
         ---
-        **Geliştirici:** Dr. Öğr. Üyesi Murat SERT  
-        Afyon Kocatepe Üniversitesi  
-        Mermer ve Doğaltaş Teknolojileri Uygulama ve Araştırma Merkezi
-        
-        **Proje:** 24.MÜH.03 — AKÜ BAP
-        
+        **Developer:** Assist. Prof. Dr. Murat SERT
+        Afyon Kocatepe University
+        Marble and Natural Stone Technologies Application and Research Center
+
+        **Project:** 24.MÜH.03 — AKÜ BAP
+
         ---
-        **Kullanılan kütüphaneler:** 
+        **Libraries used:**
         OpenCV · scikit-image · scikit-learn · Streamlit · NumPy
-        
-        **Lisans:** MIT (önerilen) — bilim için açık.
-        
+
+        **License:** MIT (recommended) — open for science.
+
         ---
-        **Bu aracı kullanırsanız lütfen atıf yapın:**  
-        > Sert, M. ve diğ. (2026). *Gözenek ve Renk Tespit Yazılımı v1.0.*  
+        **If you use this tool, please cite:**
+        > Sert, M. et al. (2026). *Pore Segmentation Suite v1.2.*
+        > Afyon Kocatepe University. (In preparation)
+
+        **Contact:** msert@aku.edu.tr
+        """)
+        else:
+            st.markdown("""
+        **Gözenek ve Renk Tespit Yazılımı v1.2**
+
+        Travertenler ve benzer doğal yapı taşlarının yüzey gözenekliliğini
+        görüntü işleme teknikleriyle tespit eden açık kaynak araç.
+
+        ---
+        **Geliştirici:** Dr. Öğr. Üyesi Murat SERT
+        Afyon Kocatepe Üniversitesi
+        Mermer ve Doğaltaş Teknolojileri Uygulama ve Araştırma Merkezi
+
+        **Proje:** 24.MÜH.03 — AKÜ BAP
+
+        ---
+        **Kullanılan kütüphaneler:**
+        OpenCV · scikit-image · scikit-learn · Streamlit · NumPy
+
+        **Lisans:** MIT (önerilen) — bilim için açık.
+
+        ---
+        **Bu aracı kullanırsanız lütfen atıf yapın:**
+        > Sert, M. ve diğ. (2026). *Gözenek ve Renk Tespit Yazılımı v1.2.*
         > Afyon Kocatepe Üniversitesi. (Hazırlık aşamasında)
-        
+
         **İletişim:** msert@aku.edu.tr
         """)
 
@@ -1048,23 +1352,47 @@ app_mode = st.session_state.get('active_mode', 'pore')
 
 # Mode banner
 mode_banner_map = {
-    'pore': ('🔬 Gözenek Analizi Modu', '#1e40af'),
-    'palette': ('🎨 Renk Paleti Modu', '#7c2d12'),
-    'aging': ('🔄 Yaşlandırma Analizi Modu', '#14532d'),
-    'collage': ('🖼️ Kolaj Oluşturucu Modu', '#581c87'),
+    'pore': (T('mode_pore_banner'), '#1e40af'),
+    'palette': (T('mode_palette_banner'), '#7c2d12'),
+    'aging': (T('mode_aging_banner'), '#14532d'),
+    'collage': (T('collage_mode_title'), '#581c87'),
 }
-banner_text, banner_color = mode_banner_map.get(app_mode, ('Bilinmeyen mod', '#444'))
+banner_text, banner_color = mode_banner_map.get(app_mode, ('Unknown mode', '#444'))
 st.markdown(
     f'<div style="background:{banner_color}22; border-left:4px solid {banner_color}; '
     f'padding:8px 16px; border-radius:4px; margin-bottom:16px;">'
-    f'<b>{banner_text}</b> — soldan ayarları yap, sonuçları burada gör.'
+    f'<b>{banner_text}</b> — ' + T('banner_suffix') +
     f'</div>',
     unsafe_allow_html=True)
 
 # ─── PORE MODE ───
 if app_mode == 'pore' and st.session_state.image_rgb is None:
-    st.info('👈 Soldan görüntü yükle.')
-    st.markdown("""
+    _mi = st.container(key='mode_info_panel')
+    _mi.info(T('load_image_left'))
+    _ce1, _ce2, _ce3 = st.columns([1, 1, 1])
+    with _ce2:
+        if st.button(T('demo_sample'), use_container_width=True, key='demo_btn_main'):
+            if _load_sample_image():
+                st.rerun()
+        st.caption(T('demo_caption'))
+    if st.session_state.get('lang', 'en') == 'en':
+        _mi.markdown("""
+    ### Quick Start
+    1. **Upload an image from the left** (jpg/png/tif)
+    2. **Pick a stone type** (KT/GT/NT/PT) — palette loads automatically
+    3. **Choose an algorithm** — DoG, MSER, Sauvola, Color Distance, or a combination
+    4. **Adjust the sliders** — the overlay updates in real time
+    5. **Mark pore colors** — which palette colors represent pores?
+    6. **Save parameters** — store as a reusable preset
+    
+    ### Algorithm Guide
+    - **DoG**: Blob detection. Good for small dark spots. Sigmas tune pore size.
+    - **MSER**: Extremal regions. Ideal for stable dark blobs. Strong cross-stone generalization.
+    - **Sauvola**: Local adaptive threshold. Robust to heterogeneous illumination.
+    - **Color Distance**: Color-palette based. Most interpretable; addresses the cross-stone problem.
+    """)
+    else:
+        _mi.markdown("""
     ### Hızlı Başlangıç
     1. **Soldan görüntü yükle** (jpg/png/tif)
     2. **Taş tipini seç** (KT/GT/NT/PT) — paleti otomatik yüklenir
@@ -1082,8 +1410,28 @@ if app_mode == 'pore' and st.session_state.image_rgb is None:
 
 # ─── PALETTE MODE — boş durum ───
 elif app_mode == 'palette' and ('computed_palette' not in st.session_state or not st.session_state.get('computed_palette')):
-    st.info('👈 Soldan **Renk Yelpazesi** sekmesinden görüntü yükle ve "Paleti Hesapla" tıkla.')
-    st.markdown("""
+    _mi = st.container(key='mode_info_panel')
+    _mi.info(('👈 From the left **Color Palette** tab, upload an image and click "Compute Palette".'
+              if st.session_state.get('lang','en')=='en'
+              else '👈 Soldan **Renk Yelpazesi** sekmesinden görüntü yükle ve "Paleti Hesapla" tıkla.'))
+    if st.session_state.get('lang','en') == 'en':
+        _mi.markdown("""
+    ### 🎨 Color Palette Mode — Quick Start
+    1. **Choose an image** (loaded or new file)
+    2. **Algorithm:** K-means (default) / GMM / MeanShift / Median Cut
+    3. **Color space:** Lab (recommended, perceptually uniform) / RGB / HSV
+    4. **Number of colors:** 7 (default, stone industry standard)
+    5. **🎨 Compute Palette** → detailed visualization opens in the main panel
+
+    ### What's next?
+    - **Pie chart + table** → dominant colors extracted from the image
+    - **L\*, a\*, b\*, Munsell** values for each color
+    - **ΔE comparison** → perceptual distance between two colors
+    - **Color uniformity** → image color homogeneity score (0-10)
+    - **JSON/CSV/PNG** export → directly usable in papers
+    """)
+    else:
+        _mi.markdown("""
     ### 🎨 Renk Paleti Modu — Hızlı Başlangıç
     1. **Görüntü seç** (yüklü veya yeni dosya)
     2. **Algoritma:** K-means (default) / GMM / MeanShift / Median Cut
@@ -1101,8 +1449,36 @@ elif app_mode == 'palette' and ('computed_palette' not in st.session_state or no
 
 # ─── AGING MODE — boş durum ───
 elif app_mode == 'aging' and ('aging_results' not in st.session_state or not st.session_state.aging_results):
-    st.info('👈 Soldan **Aging Analizi** sekmesinden pre/post görüntülerini yükle ve "Karşılaştırma Analizini Çalıştır" tıkla.')
-    st.markdown("""
+    _mi = st.container(key='mode_info_panel')
+    _mi.info(('👈 From the left **Aging Analysis** tab, upload pre/post images and click "Run Comparison Analysis".'
+              if st.session_state.get('lang','en')=='en'
+              else '👈 Soldan **Aging Analizi** sekmesinden pre/post görüntülerini yükle ve "Karşılaştırma Analizini Çalıştır" tıkla.'))
+    if st.session_state.get('lang','en') == 'en':
+        _mi.markdown("""
+    ### 🔄 Aging Analysis Mode — Quick Start
+    1. **Choose mode:** Single pair (1+1) or Multi-specimen (N+N, open-ended)
+    2. **Upload pre images** (before treatment, drag&drop)
+    3. **Upload post images** (after treatment, equal count)
+    4. **Pairing strategy:** alphabetic / upload order / manual
+    5. **ΔE metric:** ΔE-2000 (recommended, modern CIE standard)
+    6. **🔬 Run Comparison Analysis**
+
+    ### What's next?
+    - **Per-specimen table:** ΔL\*, Δa\*, Δb\*, ΔC\*, ΔH\*, ΔE for every sample
+    - **Pre/Post color swatch grid** → visual comparison
+    - **Bar chart** → with perceptual threshold lines (1, 3.5, 5, 10)
+    - **4 paired tests** (ΔE, ΔL\*, Δa\*, Δb\*) — Shapiro-Wilk → t-test/Wilcoxon
+    - **95% CI + Cohen's d** — effect size interpretation (Negligible/Small/Medium/Large)
+    - **Automatic scientific interpretation** (TR Discussion + EN paper-ready)
+    - **CSV/JSON/Markdown/TXT** export
+
+    ### Standards
+    This module complies with **TS EN 15886** (Natural stone, colour of surfaces) and 
+    **Sharma et al. 2005** (CIEDE2000). Damage class is automatically assigned via the 
+    Mokrzycki & Tatol (2011) classification.
+    """)
+    else:
+        _mi.markdown("""
     ### 🔄 Yaşlandırma Analizi Modu — Hızlı Başlangıç
     1. **Mod seç:** Tek-çift (1+1) veya Çoklu numune (N+N, açık uçlu)
     2. **Pre görüntüleri** yükle (deney öncesi, drag&drop)
@@ -1174,7 +1550,7 @@ elif app_mode == 'pore' and st.session_state.image_rgb is not None:
                 sam2_warning = result[2]
                 raw_mask = np.zeros(img.shape[:2], dtype=bool)
                 gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        elif algo == 'Color Distance (Renk Mesafesi)':
+        elif algo == T('algo_color_distance'):
             # Pore renkleri = checkbox'lı + custom
             pore_colors = []
             if st.session_state.palette_data:
@@ -1182,7 +1558,7 @@ elif app_mode == 'pore' and st.session_state.image_rgb is not None:
                                                        st.session_state.selected_pore_indices)
             pore_colors += st.session_state.custom_pore_colors
             if not pore_colors:
-                st.warning('⚠️ Lütfen paletten en az bir pore rengi seç.')
+                st.warning(T('pm_select_pore_color'))
                 raw_mask = np.zeros((H,W), dtype=bool)
                 gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
             else:
@@ -1216,7 +1592,7 @@ elif app_mode == 'pore' and st.session_state.image_rgb is not None:
                                                                      color_space=params.get('color_space','lab'))
                 raw_mask = raw_mask & color_mask
     except Exception as e:
-        st.error(f'Segmentasyon hatası: {e}')
+        st.error(T('segmentation_error') + f': {e}')
         raw_mask = np.zeros((H,W), dtype=bool)
         gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     
@@ -1250,26 +1626,26 @@ elif app_mode == 'pore' and st.session_state.image_rgb is not None:
     
     # Overlay stili + dolgu rengi
     style_cols = st.columns([2, 2, 1.5])
-    overlay_style = style_cols[0].radio('Overlay stili', 
-                                         ['Dolgu (saydam)', 'Sadece sınırlar'], 
+    overlay_style = style_cols[0].radio(T('overlay_style_label'), 
+                                         [T('style_fill'), T('style_outline')], 
                                          horizontal=True)
     
     # Renk presetleri — açık taş için koyu, koyu taş için açık
     color_presets = {
-        '🟢 Yeşil (açık taş)': (0, 255, 80),
-        '🟡 Sarı parlak (universal)': (255, 230, 0),
-        '🔴 Kırmızı (alarm)': (255, 40, 40),
-        '🌸 Pembe (koyu taş)': (255, 80, 200),
-        '🟣 Magenta (koyu taş)': (255, 0, 255),
-        '🔵 Mavi (kontrast)': (0, 120, 255),
-        '🟦 Cyan/Turkuaz': (0, 255, 220),
-        '⚪ Beyaz (çok koyu taş)': (255, 255, 255),
-        '⚫ Siyah (çok açık taş)': (0, 0, 0),
-        '🟠 Turuncu': (255, 140, 0),
-        '🤖 Auto (görüntüye göre)': 'auto',
-        '🎨 Custom (kendin seç)': 'custom',
+        T('preset_green_light'): (0, 255, 80),
+        T('preset_yellow'):      (255, 230, 0),
+        T('preset_red'):         (255, 40, 40),
+        T('preset_pink'):        (255, 80, 200),
+        T('preset_magenta'):     (255, 0, 255),
+        T('preset_blue'):        (0, 120, 255),
+        T('preset_cyan'):        (0, 255, 220),
+        T('preset_white'):       (255, 255, 255),
+        T('preset_black'):       (0, 0, 0),
+        T('preset_orange'):      (255, 140, 0),
+        T('preset_auto'):        'auto',
+        T('preset_custom'):      'custom',
     }
-    color_choice = style_cols[1].selectbox('Dolgu rengi', 
+    color_choice = style_cols[1].selectbox(T('fill_color_label'), 
                                             list(color_presets.keys()), 
                                             index=10)  # Auto default
     
@@ -1280,17 +1656,17 @@ elif app_mode == 'pore' and st.session_state.image_rgb is not None:
         mean_brightness = float(img.mean())
         if mean_brightness > 160:    # açık taş (KT, PT gibi) → magenta-pembe
             fill_color = (220, 0, 200)
-            auto_note = '→ Magenta (açık taş tespit edildi)'
+            auto_note = T('auto_note_magenta')
         elif mean_brightness > 100:  # orta tonda
             fill_color = (0, 255, 100)
-            auto_note = '→ Yeşil (orta tonda)'
+            auto_note = T('auto_note_green')
         else:                         # koyu taş → parlak sarı
             fill_color = (255, 240, 0)
-            auto_note = '→ Sarı (koyu taş tespit edildi)'
-        style_cols[2].caption(f'**Auto**: parlaklık={mean_brightness:.0f}')
+            auto_note = T('auto_note_yellow')
+        style_cols[2].caption(T('auto_brightness_label') + f'={mean_brightness:.0f}')
         style_cols[2].caption(auto_note)
     elif color_val == 'custom':
-        custom_hex = style_cols[2].color_picker('Renk seç', '#00ff50', label_visibility='collapsed')
+        custom_hex = style_cols[2].color_picker(T('color_picker'), '#00ff50', label_visibility='collapsed')
         fill_color = tuple(utils.hex_to_rgb(custom_hex))
     else:
         fill_color = color_val
@@ -1302,21 +1678,21 @@ elif app_mode == 'pore' and st.session_state.image_rgb is not None:
             unsafe_allow_html=True)
     
     # Alpha (saydamlık) veya thickness (sınır kalınlığı)
-    if overlay_style == 'Dolgu (saydam)':
-        alpha = st.slider('Saydamlık (alpha)', 0.10, 0.95, 0.55, step=0.05,
-                          help='Düşük=daha saydam (orijinal daha görünür), Yüksek=daha opak')
+    if overlay_style == T('style_fill'):
+        alpha = st.slider(T('alpha'), 0.10, 0.95, 0.55, step=0.05,
+                          help=T('pm_help_alpha'))
         overlay = utils.make_overlay(img, final_mask, color=fill_color, alpha=alpha)
     else:
-        thickness = st.slider('Sınır kalınlığı (px)', 1, 8, 2,
-                              help='Kontur çizgisi kalınlığı')
+        thickness = st.slider(T('outline_thickness'), 1, 8, 2,
+                              help=T('pm_help_thickness'))
         overlay = utils.make_outline_overlay(img, final_mask, color=fill_color, thickness=thickness)
     overlay_display = utils.resize_for_display(overlay, display_max)
     
     col1, col2 = st.columns(2)
     with col1:
-        st.image(img_display, caption='Orijinal', width='stretch')
+        st.image(img_display, caption=T('caption_original'), width='stretch')
     with col2:
-        st.image(overlay_display, caption=f'Segmentasyon ({algo})', width='stretch')
+        st.image(overlay_display, caption=T('caption_segmentation') + f' ({algo})', width='stretch')
     
     # SAM2/CellPose uyarısı
     if sam2_warning:
@@ -1324,57 +1700,101 @@ elif app_mode == 'pore' and st.session_state.image_rgb is not None:
     
     # Metrik kutuları
     mc1, mc2, mc3, mc4 = st.columns(4)
-    mc1.metric('Görüntü Porozitesi', f"{metrics['porosity_pct']:.2f} %")
-    mc2.metric('Pore Sayısı', metrics['n_pores'])
-    mc3.metric('Ort. Alan (mm²)', f"{metrics['mean_area_mm2']:.3f}")
-    mc4.metric('Ort. Dairesellik', f"{metrics['mean_circularity']:.3f}")
+    mc1.metric(T('metric_porosity'), f"{metrics['porosity_pct']:.2f} %")
+    mc2.metric(T('metric_pore_count'), metrics['n_pores'])
+    mc3.metric(T('metric_mean_area'), f"{metrics['mean_area_mm2']:.3f}")
+    mc4.metric(T('metric_mean_circ'), f"{metrics['mean_circularity']:.3f}")
+
+    # ── Güvenilirlik rozeti: gözeneklilik rejimine göre (Oğuz tarzı renkli kart) ──
+    _pp = metrics['porosity_pct']
+    _rpal = _chart_pal()
+    if _pp < 2.0:
+        _rc, _ric, _rlab, _rmsg = _rpal['green'], '🟢', T('rel_low'), T('rel_low_msg')
+    elif _pp <= 8.0:
+        _rc, _ric, _rlab, _rmsg = _rpal['gold'], '🟠', T('rel_mid'), T('rel_mid_msg')
+    else:
+        _rc, _ric, _rlab, _rmsg = _rpal['red'], '🔴', T('rel_high'), T('rel_high_msg')
+    st.markdown(
+        f'<div style="border-left:5px solid {_rc};background:{_rc}1f;'
+        f'padding:10px 14px;border-radius:10px;margin:8px 0 4px;">'
+        f'<span style="font-weight:700;color:{_rc};font-size:1.02rem">{_ric} {T("rel_title")}: {_rlab}</span><br>'
+        f'<span style="font-size:.92rem;color:{_rpal["ink"]}">{_rmsg}</span></div>',
+        unsafe_allow_html=True)
     
     # Karşılaştırma — deneysel değer biliniyorsa
-    with st.expander('🧪 Deneysel referans karşılaştırması (opsiyonel)'):
-        exp_ref = st.number_input('TS EN 1936 açık porozite (%) — biliniyorsa', value=0.0, step=0.1)
+    with st.expander(T('reference_compare')):
+        exp_ref = st.number_input(T('pm_ref_porosity'), value=0.0, step=0.1)
         if exp_ref > 0:
             sapma = abs(metrics['porosity_pct'] - exp_ref)
-            st.write(f'**Sapma:** {sapma:.2f} pp')
-            if sapma < 0.5: st.success('✓ Mükemmel uyum')
-            elif sapma < 1.5: st.info('Kabul edilebilir')
-            elif sapma < 3.0: st.warning('Geliştirilebilir')
-            else: st.error('Yüksek sapma')
+            st.write('**' + T('pm_deviation') + f':** {sapma:.2f} pp')
+            if sapma < 0.5: st.success(T('pm_excellent_match'))
+            elif sapma < 1.5: st.info(T('pm_acceptable'))
+            elif sapma < 3.0: st.warning(T('pm_improvable'))
+            else: st.error(T('pm_high_deviation'))
     
     # Görüntüden renk seçme (basit form)
-    with st.expander('🎯 Görüntüden pore rengi seç (manuel)'):
-        st.caption('Görüntüde bir pore üzerine tıkladığında pixel koordinatlarını gir (sol-üst köşe 0,0):')
+    with st.expander(T('pm_pick_color_title')):
+        st.caption(T('pm_pick_caption'))
         cc1, cc2, cc3 = st.columns([1,1,2])
-        px_x = cc1.number_input('X (piksel)', min_value=0, max_value=W-1, value=W//2)
-        px_y = cc2.number_input('Y (piksel)', min_value=0, max_value=H-1, value=H//2)
-        if cc3.button('🎯 Bu noktadaki rengi pore listesine ekle'):
+        px_x = cc1.number_input(T('pm_x_px'), min_value=0, max_value=W-1, value=W//2)
+        px_y = cc2.number_input(T('pm_y_px'), min_value=0, max_value=H-1, value=H//2)
+        if cc3.button(T('pm_add_color_btn')):
             rgb = utils.pick_color_at(img, int(px_x), int(px_y))
             st.session_state.custom_pore_colors.append(rgb)
-            st.success(f'Eklendi: {utils.rgb_to_hex(rgb)} (RGB={rgb})')
+            st.success(f'{T("pm_added")}: {utils.rgb_to_hex(rgb)} (RGB={rgb})')
             st.rerun()
     
     # Pore detay tablosu
-    with st.expander('🔎 Detaylı pore istatistikleri (ilk 50)'):
+    with st.expander(T('pm_pore_stats_title')):
         if kept_props:
             rows = []
             for i, p in enumerate(kept_props[:50]):
                 rows.append({
-                    '#': i+1, 'Alan (px)': p.area, 
-                    'Alan (mm²)': round(p.area * 0.091**2, 3),
-                    'Çevre (px)': round(p.perimeter, 1),
-                    'Dairesellik': round(4*np.pi*p.area/(p.perimeter**2) if p.perimeter>0 else 0, 3),
+                    '#': i+1, T('pm_col_area_px'): p.area, 
+                    T('pm_col_area_mm2'): round(p.area * 0.091**2, 3),
+                    T('pm_col_perimeter'): round(p.perimeter, 1),
+                    T('pm_col_circularity'): round(4*np.pi*p.area/(p.perimeter**2) if p.perimeter>0 else 0, 3),
                     'Eccentricity': round(p.eccentricity, 3),
-                    'Ortalama yoğunluk': round(p.mean_intensity, 1),
+                    T('pm_col_mean_intensity'): round(p.mean_intensity, 1),
                 })
             st.dataframe(pd.DataFrame(rows), use_container_width=True)
             
             csv_bytes = pd.DataFrame(rows).to_csv(index=False).encode('utf-8')
-            st.download_button('📥 Tüm pore detaylarını CSV indir', csv_bytes, 
+            st.download_button(T('pm_download_all_csv'), csv_bytes, 
                                 file_name=f'{st.session_state.image_name}_pores.csv', mime='text/csv')
         else:
-            st.write('Pore tespit edilmedi.')
+            st.write(T('pm_no_pores'))
     
+    # Gözenek boyut dağılımı (MIP tarzı) — image-derived pore-size distribution
+    with st.expander(T('psd_title')):
+        if kept_props:
+            st.caption(T('psd_intro'))
+            _wsel = st.radio(T('psd_weight'), [T('psd_weight_area'), T('psd_weight_count')],
+                             horizontal=True, key='psd_w')
+            _wmode = 'area' if _wsel == T('psd_weight_area') else 'count'
+            _dist = psize.pore_size_distribution(kept_props, pixel_scale_mm=0.091, weight=_wmode)
+            if _dist:
+                st.markdown(psize.psd_svg(_dist, title=T('psd_chart_title'), xlabel=T('psd_xlabel'),
+                                          y_inc=T('psd_y_inc'), y_cum=T('psd_y_cum'), pal=_chart_pal()),
+                            unsafe_allow_html=True)
+                if _dist['d50'] == _dist['d50']:
+                    st.metric(T('psd_d50'), f"{_dist['d50']:.3f} mm")
+                st.info(T('psd_note'))
+                _tbl = pd.DataFrame({
+                    T('psd_xlabel'): [f"{_dist['bin_edges'][i]:.3f}-{_dist['bin_edges'][i+1]:.3f}"
+                                      for i in range(len(_dist['inc_pct']))],
+                    T('psd_y_inc'): _dist['inc_pct'].round(2),
+                    T('psd_y_cum'): _dist['cum_pct'].round(2),
+                    'n': _dist['counts'],
+                })
+                st.download_button(T('psd_download'), _tbl.to_csv(index=False).encode('utf-8'),
+                                   file_name=f"{st.session_state.image_name}_pore_size_distribution.csv",
+                                   mime='text/csv', key='psd_csv')
+        else:
+            st.write(T('pm_no_pores'))
+
     # Mask ve overlay indir
-    with st.expander('📥 Çıktıları indir'):
+    with st.expander(T('pm_download_outputs')):
         ov_pil = Image.fromarray(overlay)
         buf = BytesIO(); ov_pil.save(buf, format='PNG')
         st.download_button('Overlay PNG', buf.getvalue(), 
@@ -1383,6 +1803,109 @@ elif app_mode == 'pore' and st.session_state.image_rgb is not None:
         buf2 = BytesIO(); mask_pil.save(buf2, format='PNG')
         st.download_button('Binary mask PNG', buf2.getvalue(),
                             file_name=f'{st.session_state.image_name}_mask.png', mime='image/png')
+        # Tüm çıktıları tek ZIP olarak indir (#3)
+        import zipfile as _zip
+        _nm = (st.session_state.image_name or 'image').rsplit('.', 1)[0]
+        _zbuf = BytesIO()
+        with _zip.ZipFile(_zbuf, 'w', _zip.ZIP_DEFLATED) as _zf:
+            _b = BytesIO(); Image.fromarray(overlay).save(_b, format='PNG')
+            _zf.writestr(f'{_nm}_overlay.png', _b.getvalue())
+            _b = BytesIO(); Image.fromarray((final_mask * 255).astype(np.uint8)).save(_b, format='PNG')
+            _zf.writestr(f'{_nm}_mask.png', _b.getvalue())
+            _zf.writestr(f'{_nm}_metrics.json', safe_json_dumps(metrics, indent=2))
+        st.download_button(T('dl_all_zip'), _zbuf.getvalue(),
+                            file_name=f'{_nm}_outputs.zip', mime='application/zip',
+                            use_container_width=True, key='dl_all_zip_btn')
+
+    # ────────────────────────────────────────────────────
+    # P2 — ÇOKLU-YÖNTEM POROZİTE YAYILIMI (yöntem-bağımlılığı / belirsizlik)
+    # Aynı görüntü; birden çok algoritma; porozite yayılımını şeffaf raporla.
+    # ────────────────────────────────────────────────────
+    st.divider()
+    with st.expander(T('p2_title'), expanded=False):
+        st.caption(T('p2_intro'))
+        P2_FAM = {'Sauvola':'Classical','Multi-Otsu':'Classical',
+                  'DoG':'Blob/region','MSER':'Blob/region','Bottom-Hat':'Blob/region',
+                  'Frangi':'Blob/region','GMM':'Clustering'}
+        P2_FC = {'Classical':'#1f77b4','Blob/region':'#d62728','Clustering':'#2ca02c'}
+        p2_all = comp.available_methods()
+        p2_sel = st.multiselect(T('p2_methods'), p2_all, default=p2_all, key='p2_methods_sel')
+        if st.button(T('p2_run_btn'), key='p2_run', use_container_width=True):
+            if len(p2_sel) < 2:
+                st.warning(T('p2_need_run'))
+            else:
+                rows = []
+                prog = st.progress(0.0)
+                with st.spinner(T('p2_running')):
+                    for k, m in enumerate(p2_sel):
+                        try:
+                            _, por = comp.run_method(img, m, filter_params=final_filter_params)
+                        except Exception:
+                            por = float('nan')
+                        rows.append({'method': m, 'family': P2_FAM.get(m, '-'), 'porosity': por})
+                        prog.progress((k+1)/len(p2_sel))
+                prog.empty()
+                st.session_state['p2_spread'] = rows
+        rows = st.session_state.get('p2_spread')
+        if rows:
+            vals = [r['porosity'] for r in rows if r['porosity'] == r['porosity']]
+            if vals:
+                vmin, vmax = min(vals), max(vals)
+                sv = sorted(vals); med = sv[len(sv)//2] if len(sv)%2 else (sv[len(sv)//2-1]+sv[len(sv)//2])/2
+                spread = vmax - vmin
+                s1, s2, s3, s4 = st.columns(4)
+                s1.metric(T('p2_median'), f'{med:.2f} %')
+                s2.metric(T('p2_range'), f'{spread:.2f} pp')
+                s3.metric(T('p2_min'),   f'{vmin:.2f} %')
+                s4.metric(T('p2_max'),   f'{vmax:.2f} %')
+                # ── inline-SVG horizontal lollipop chart (no matplotlib dependency) ──
+                srt = sorted(rows, key=lambda r: (r['porosity'] != r['porosity'], -(r['porosity'] if r['porosity']==r['porosity'] else 0)))
+                W, rh, gut, padR, top, botax = 640, 30, 104, 60, 30, 34
+                plotW = W - gut - padR
+                scale = (vmax * 1.18) if vmax > 0 else 1.0
+                Hsvg = top + len(srt)*rh + botax
+                med_x = gut + (med/scale)*plotW
+                _pal = _chart_pal()
+                parts = [f'<svg width="100%" viewBox="0 0 {W} {Hsvg}" xmlns="http://www.w3.org/2000/svg" font-family="Arial,Helvetica,sans-serif">']
+                parts.append(f'<text x="{gut}" y="18" font-size="13" font-weight="bold" fill="{_pal["ink"]}">{T("p2_chart_title")}</text>')
+                # median guide
+                parts.append(f'<line x1="{med_x:.1f}" y1="{top-4}" x2="{med_x:.1f}" y2="{top+len(srt)*rh}" stroke="{_pal["muted"]}" stroke-width="1.4" stroke-dasharray="5,4"/>')
+                for i, r in enumerate(srt):
+                    y = top + i*rh + rh/2
+                    fc = _pal['fam'].get(r['family'], '#888')
+                    parts.append(f'<text x="{gut-8}" y="{y+4:.1f}" font-size="12" text-anchor="end" fill="{_pal["ink"]}">{r["method"]}</text>')
+                    por = r['porosity']
+                    if por == por:
+                        bw = max((por/scale)*plotW, 2)
+                        parts.append(f'<line x1="{gut}" y1="{y:.1f}" x2="{gut+bw:.1f}" y2="{y:.1f}" stroke="{fc}" stroke-width="7" stroke-linecap="round"/>')
+                        parts.append(f'<circle cx="{gut+bw:.1f}" cy="{y:.1f}" r="5.5" fill="{fc}" stroke="{_pal["dot_ring"]}" stroke-width="1"/>')
+                        parts.append(f'<text x="{gut+bw+10:.1f}" y="{y+4:.1f}" font-size="12" fill="{_pal["ink"]}">{por:.2f}%</text>')
+                    else:
+                        parts.append(f'<text x="{gut+6}" y="{y+4:.1f}" font-size="11" fill="{_pal["red"]}">{T("p2_failed")}</text>')
+                # x axis
+                axy = top + len(srt)*rh + 8
+                parts.append(f'<line x1="{gut}" y1="{axy}" x2="{gut+plotW}" y2="{axy}" stroke="{_pal["grid"]}" stroke-width="1"/>')
+                for t in range(0, 6):
+                    xv = gut + (t/5)*plotW; lab = scale*(t/5)
+                    parts.append(f'<line x1="{xv:.1f}" y1="{axy}" x2="{xv:.1f}" y2="{axy+4}" stroke="{_pal["axis"]}"/>')
+                    parts.append(f'<text x="{xv:.1f}" y="{axy+16}" font-size="10" text-anchor="middle" fill="{_pal["muted"]}">{lab:.1f}</text>')
+                # family legend
+                lx = gut + plotW - 150
+                for j, (fam, col) in enumerate(_pal['fam'].items()):
+                    ly = top + 2 + j*15
+                    parts.append(f'<rect x="{lx}" y="{ly-9}" width="11" height="11" fill="{col}" rx="2"/>')
+                    parts.append(f'<text x="{lx+16}" y="{ly}" font-size="10" fill="{_pal["muted"]}">{fam}</text>')
+                parts.append('</svg>')
+                st.markdown(''.join(parts), unsafe_allow_html=True)
+                st.info(T('p2_interpret').format(spread=f'{spread:.1f}'))
+                p2_df = pd.DataFrame([{T('p2_method_col'): r['method'], T('p2_family'): r['family'],
+                                       T('p2_porosity_col'): (round(r['porosity'],3) if r['porosity']==r['porosity'] else None)}
+                                      for r in rows])
+                st.dataframe(p2_df, use_container_width=True, hide_index=True)
+                st.download_button(T('p2_download'),
+                                   p2_df.to_csv(index=False).encode('utf-8'),
+                                   file_name=f'{st.session_state.image_name}_method_spread.csv',
+                                   mime='text/csv', key='p2_csv')
 
 # ============================================================
 # 🎨 RENK YELPAZESİ — Ana Panel Detaylı Görselleştirme
@@ -1390,34 +1913,34 @@ elif app_mode == 'pore' and st.session_state.image_rgb is not None:
 # ============================================================
 if app_mode == 'palette' and 'computed_palette' in st.session_state and st.session_state.get('computed_palette'):
     st.divider()
-    with st.expander('🎨 Renk Yelpazesi — Detaylı Görselleştirme', expanded=True):
+    with st.expander(T('pd_title'), expanded=True):
         palette = st.session_state.computed_palette
         meta = st.session_state.computed_palette_meta
         
-        st.caption(f'**Kaynak:** {meta.get("source_image","-")} · **Algoritma:** {meta.get("algorithm","-")} · **Renk uzayı:** {meta.get("color_space","-")}')
+        st.caption(f'**{T("pd_source")}:** {meta.get("source_image","-")} · **{T("pd_algorithm")}:** {meta.get("algorithm","-")} · **{T("color_space")}:** {meta.get("color_space","-")}')
         
         # İki sütun: sol palette swatches, sağ pie chart
         pc1, pc2 = st.columns([1, 1])
         
         with pc1:
-            st.markdown('##### Renk Listesi (karanlıktan açığa)')
+            st.markdown('##### ' + T('pd_color_list'))
             # Tablo halinde göster
             pal_df = pd.DataFrame([{
                 '#': i+1,
                 'Hex': c['hex'],
                 'RGB': f"({c['rgb'][0]}, {c['rgb'][1]}, {c['rgb'][2]})",
-                'Parlaklık': round(c['brightness'], 0),
+                T('pd_brightness'): round(c['brightness'], 0),
                 'Fraction (%)': round(c['fraction_pct'], 2),
             } for i, c in enumerate(palette)])
             st.dataframe(pal_df, use_container_width=True, hide_index=True)
             
             # Hex değerleri tek satır (kopya için kolay)
-            st.markdown('##### Hex değerleri (kopyala)')
+            st.markdown('##### ' + T('pd_hex_values'))
             hex_string = ' '.join(c['hex'] for c in palette)
             st.code(hex_string, language=None)
         
         with pc2:
-            st.markdown('##### Renk Oranları (Pie Chart)')
+            st.markdown('##### ' + T('pd_pie'))
             # Pure SVG pie chart — matplotlib bağımlılığı olmadan
             import math
             size = 400
@@ -1465,7 +1988,7 @@ if app_mode == 'palette' and 'computed_palette' in st.session_state and st.sessi
         # Tek-satır büyük palette bandı
         # Her bölüme hex+fraction yazılır; dar bölümlerde ellipsis ile kesilir,
         # imleç üstüne gelince native tooltip (title attribute) tam bilgiyi gösterir
-        st.markdown('##### Palette Bandı (görsel)')
+        st.markdown('##### ' + T('pd_band'))
         band_html = '<div style="display:flex; height:72px; border-radius:8px; overflow:hidden; border:1px solid #888;">'
         for c in palette:
             txt_color = '#fff' if c['brightness'] < 128 else '#000'
@@ -1486,11 +2009,11 @@ if app_mode == 'palette' and 'computed_palette' in st.session_state and st.sessi
             )
         band_html += '</div>'
         st.markdown(band_html, unsafe_allow_html=True)
-        st.caption('💡 Bant üzerinde imleci bekleterek tam hex+RGB+oran bilgisini görebilirsin.')
+        st.caption(T('pd_band_hint'))
         
         # Export
         st.markdown('---')
-        st.markdown('##### 📥 İndir')
+        st.markdown('##### ' + T('pd_download'))
         ec1, ec2, ec3 = st.columns(3)
         
         # CSV
@@ -1534,17 +2057,17 @@ if app_mode == 'palette' and 'computed_palette' in st.session_state and st.sessi
         # ΔE Renk Karşılaştırma
         # ─────────────────────────────────────────────────────
         st.markdown('---')
-        st.markdown('##### 🔬 ΔE Renk Karşılaştırma (CIE)')
-        st.caption('İki rengin perceptual (algısal) farkını ölç. ΔE-2000 modern CIE standardıdır (Sharma et al. 2005).')
+        st.markdown('##### ' + T('de_title'))
+        st.caption(T('de_caption'))
         
         # Palette renkleri + custom RGB inputu seçenekleri
-        delta_options = ['🎨 Palette\'ten seç'] + [f'{i+1}. {c["hex"]} ({c.get("fraction_pct",0):.1f}%)' for i,c in enumerate(palette)]
+        delta_options = [T('de_pick_from_palette')] + [f'{i+1}. {c["hex"]} ({c.get("fraction_pct",0):.1f}%)' for i,c in enumerate(palette)]
         
         dc1, dc2 = st.columns(2)
         with dc1:
-            st.markdown('**Renk A**')
-            color_a_choice = st.selectbox('Seç', delta_options, index=1, key='delta_color_a')
-            if color_a_choice == '🎨 Palette\'ten seç':
+            st.markdown('**' + T('de_color_a') + '**')
+            color_a_choice = st.selectbox(T('de_pick'), delta_options, index=1, key='delta_color_a')
+            if color_a_choice == T('de_pick_from_palette'):
                 color_a_hex = st.color_picker('Custom A', '#1b1a13', key='delta_a_custom')
                 color_a_rgb = utils.hex_to_rgb(color_a_hex)
             else:
@@ -1555,9 +2078,9 @@ if app_mode == 'palette' and 'computed_palette' in st.session_state and st.sessi
             st.markdown(f'<div style="background:{color_a_hex};width:100%;height:60px;border:2px solid #888;border-radius:6px;display:flex;align-items:center;justify-content:center;color:{"#fff" if sum(color_a_rgb)/3<128 else "#000"};font-weight:600;">{color_a_hex}</div>', unsafe_allow_html=True)
         
         with dc2:
-            st.markdown('**Renk B**')
-            color_b_choice = st.selectbox('Seç', delta_options, index=min(len(palette), 2) if len(palette)>=2 else 1, key='delta_color_b')
-            if color_b_choice == '🎨 Palette\'ten seç':
+            st.markdown('**' + T('de_color_b') + '**')
+            color_b_choice = st.selectbox(T('de_pick'), delta_options, index=min(len(palette), 2) if len(palette)>=2 else 1, key='delta_color_b')
+            if color_b_choice == T('de_pick_from_palette'):
                 color_b_hex = st.color_picker('Custom B', '#e9caa2', key='delta_b_custom')
                 color_b_rgb = utils.hex_to_rgb(color_b_hex)
             else:
@@ -1575,9 +2098,9 @@ if app_mode == 'palette' and 'computed_palette' in st.session_state and st.sessi
             
             st.markdown('')
             mc1, mc2, mc3 = st.columns(3)
-            mc1.metric('ΔE-76 (CIE 1976)', f'{de76:.2f}', help='Klasik Euclidean Lab mesafesi')
-            mc2.metric('ΔE-94 (CIE 1994)', f'{de94:.2f}', help='Chroma/hue ağırlıklı')
-            mc3.metric('ΔE-2000 (modern)', f'{de2k:.2f}', help='CIEDE2000 — Q1 dergi standardı (Sharma 2005)')
+            mc1.metric('ΔE-76 (CIE 1976)', f'{de76:.2f}', help=T('de_help_76'))
+            mc2.metric('ΔE-94 (CIE 1994)', f'{de94:.2f}', help=T('de_help_94'))
+            mc3.metric('ΔE-2000 (modern)', f'{de2k:.2f}', help=T('de_help_2k'))
             
             # Yorum
             if de2k < 1: color_box = '#22c55e'
@@ -1589,23 +2112,23 @@ if app_mode == 'palette' and 'computed_palette' in st.session_state and st.sessi
             st.markdown(
                 f'<div style="background:{color_box}22; border-left:4px solid {color_box}; '
                 f'padding:12px 16px; border-radius:4px; margin-top:8px;">'
-                f'<b>Görsel Yorum:</b> {interp}'
+                f'<b>{T("de_visual_interp")}:</b> {translate_cs(interp)}'
                 f'</div>',
                 unsafe_allow_html=True)
             
             # Detay: Lab değerleri yan yana
-            with st.expander('🔍 Detaylı Lab/LCh değerleri'):
+            with st.expander(T('de_detail_expander')):
                 L_a, a_a, b_a = cs.rgb_to_lab(color_a_rgb)
                 L_b, a_b, b_b = cs.rgb_to_lab(color_b_rgb)
                 _, C_a, h_a = cs.lab_to_lch(L_a, a_a, b_a)
                 _, C_b, h_b = cs.lab_to_lch(L_b, a_b, b_b)
                 detail_df = pd.DataFrame({
-                    'Metrik': ['L* (Lightness)', 'a* (Green-Red)', 'b* (Blue-Yellow)', 
+                    T('de_metric_col'): ['L* (Lightness)', 'a* (Green-Red)', 'b* (Blue-Yellow)', 
                                 'C* (Chroma)', 'h° (Hue angle)', 'Munsell'],
-                    'Renk A': [f'{L_a:.2f}', f'{a_a:+.2f}', f'{b_a:+.2f}',
+                    T('de_color_a'): [f'{L_a:.2f}', f'{a_a:+.2f}', f'{b_a:+.2f}',
                                  f'{C_a:.2f}', f'{h_a:.1f}°',
                                  cs.lab_to_munsell_approx(L_a, a_a, b_a)],
-                    'Renk B': [f'{L_b:.2f}', f'{a_b:+.2f}', f'{b_b:+.2f}',
+                    T('de_color_b'): [f'{L_b:.2f}', f'{a_b:+.2f}', f'{b_b:+.2f}',
                                  f'{C_b:.2f}', f'{h_b:.1f}°',
                                  cs.lab_to_munsell_approx(L_b, a_b, b_b)],
                     'Δ': [f'{L_b-L_a:+.2f}', f'{a_b-a_a:+.2f}', f'{b_b-b_a:+.2f}',
@@ -1613,30 +2136,30 @@ if app_mode == 'palette' and 'computed_palette' in st.session_state and st.sessi
                 })
                 st.dataframe(detail_df, use_container_width=True, hide_index=True)
                 
-                st.caption('💡 ΔE < 1: fark edilmez | 1-2: eğitimli göz | 2-3.5: zar zor | 3.5-5: belirgin | 5-10: net | >10: çok farklı')
+                st.caption(T('de_scale_hint'))
         except Exception as e:
-            st.error(f'ΔE hesaplama hatası: {e}')
+            st.error(f'{T("de_error")}: {e}')
         
         # ─────────────────────────────────────────────────────
         # 📐 RENK HOMOJENLİĞİ ANALİZİ (Seviye 4)
         # ─────────────────────────────────────────────────────
         st.markdown('---')
-        st.markdown('##### 📐 Renk Homojenliği Analizi (CIE Lab Uniformity)')
-        st.caption('Görüntü genelinde renk dağılımının ne kadar homojen olduğunu ölçer. Taş kalite kontrolü ve tuz hasarı değerlendirmesi için.')
+        st.markdown('##### ' + T('uni_title'))
+        st.caption(T('uni_caption'))
         
         if st.session_state.image_rgb is not None:
-            uni_sample_size = st.select_slider('Örnekleme boyutu', 
+            uni_sample_size = st.select_slider(T('uni_sample_size'), 
                                                   options=[5000, 10000, 20000, 50000, 100000],
                                                   value=20000, key='uni_sample',
-                                                  help='Yüksek = daha doğru, daha yavaş')
+                                                  help=T('uni_sample_help'))
             
-            if st.button('📐 Homojenlik Skorunu Hesapla', use_container_width=True, key='compute_uni'):
-                with st.spinner('Hesaplanıyor...'):
+            if st.button(T('uni_compute_btn'), use_container_width=True, key='compute_uni'):
+                with st.spinner(T('computing')):
                     try:
                         u = cs.compute_uniformity(st.session_state.image_rgb, sample_size=uni_sample_size)
                         st.session_state.uniformity_result = u
                     except Exception as e:
-                        st.error(f'Uniformity hesaplama hatası: {e}')
+                        st.error(f'{T("uni_error")}: {e}')
             
             if 'uniformity_result' in st.session_state and st.session_state.uniformity_result:
                 u = st.session_state.uniformity_result
@@ -1645,7 +2168,7 @@ if app_mode == 'palette' and 'computed_palette' in st.session_state and st.sessi
                 um1, um2, um3 = st.columns([1.5, 1, 1])
                 with um1:
                     # Mean color swatch
-                    st.markdown(f'**Görüntünün Ortalama Rengi**')
+                    st.markdown('**' + T('uni_mean_color') + '**')
                     st.markdown(
                         f'<div style="background:{u["mean_color_hex"]}; '
                         f'width:100%; height:80px; border:2px solid #888; '
@@ -1655,125 +2178,125 @@ if app_mode == 'palette' and 'computed_palette' in st.session_state and st.sessi
                         f'{u["mean_color_hex"]}'
                         f'</div>', unsafe_allow_html=True)
                 with um2:
-                    st.metric('Homojenlik Skoru', f'{u["homogeneity_score_0_10"]:.1f}/10')
+                    st.metric(T('uni_score'), f'{u["homogeneity_score_0_10"]:.1f}/10')
                 with um3:
                     # Class olarak göster
-                    st.markdown('**Sınıflandırma**')
-                    st.markdown(f'<div style="padding:8px 12px; background:#1f2937; border-radius:6px; text-align:center; font-size:14px; margin-top:8px;">{u["uniformity_class"]}</div>', unsafe_allow_html=True)
+                    st.markdown('**' + T('uni_classification') + '**')
+                    st.markdown(f'<div style="padding:8px 12px; background:#1f2937; border-radius:6px; text-align:center; font-size:14px; margin-top:8px;">{translate_cs(u["uniformity_class"])}</div>', unsafe_allow_html=True)
                 
                 # Lab istatistikleri
-                st.markdown('**CIE Lab İstatistikleri**')
+                st.markdown('**' + T('uni_lab_stats') + '**')
                 stats_df = pd.DataFrame({
-                    'Kanal': ['L* (Lightness)', 'a* (Green-Red)', 'b* (Blue-Yellow)'],
-                    'Ortalama': [u['mean_L'], u['mean_a'], u['mean_b']],
-                    'Standart Sapma (σ)': [u['std_L'], u['std_a'], u['std_b']],
-                    'Yorum': [
-                        'Parlaklık değişkenliği' if u['std_L'] > 8 else 'Düzgün parlaklık',
-                        'Yeşil-kırmızı değişkenliği' if u['std_a'] > 4 else 'Tutarlı a* renk',
-                        'Mavi-sarı değişkenliği' if u['std_b'] > 4 else 'Tutarlı b* renk',
+                    T('uni_col_channel'): ['L* (Lightness)', 'a* (Green-Red)', 'b* (Blue-Yellow)'],
+                    T('uni_col_mean'): [u['mean_L'], u['mean_a'], u['mean_b']],
+                    T('uni_col_std'): [u['std_L'], u['std_a'], u['std_b']],
+                    T('uni_col_interp'): [
+                        T('uni_interp_L_var') if u['std_L'] > 8 else T('uni_interp_L_uniform'),
+                        T('uni_interp_a_var') if u['std_a'] > 4 else T('uni_interp_a_uniform'),
+                        T('uni_interp_b_var') if u['std_b'] > 4 else T('uni_interp_b_uniform'),
                     ],
                 })
                 st.dataframe(stats_df, use_container_width=True, hide_index=True)
                 
                 # ΔE-2000 istatistikleri
-                st.markdown('**ΔE-2000 Renk Dağılımı (ortalama renkten sapma)**')
+                st.markdown('**' + T('uni_de_dist') + '**')
                 de1, de2, de3, de4 = st.columns(4)
-                de1.metric('Ortalama ΔE', f'{u["delta_e_avg_from_mean"]:.2f}')
-                de2.metric('Std ΔE', f'{u["delta_e_std"]:.2f}')
-                de3.metric('p95 ΔE', f'{u["delta_e_p95"]:.2f}', help='En aykırı %5 piksel')
-                de4.metric('Max ΔE', f'{u["delta_e_max"]:.2f}', help='En uç piksel (outlier)')
+                de1.metric(T('uni_de_avg'), f'{u["delta_e_avg_from_mean"]:.2f}')
+                de2.metric(T('uni_de_std'), f'{u["delta_e_std"]:.2f}')
+                de3.metric(T('uni_de_p95'), f'{u["delta_e_p95"]:.2f}', help=T('uni_de_p95_help'))
+                de4.metric(T('uni_de_max'), f'{u["delta_e_max"]:.2f}', help=T('uni_de_max_help'))
                 
                 # Bilimsel yorumlama bloğu
                 interp_text = ""
                 if u['homogeneity_score_0_10'] >= 8:
-                    interp_text = "Bu taş **görsel olarak çok tutarlı**. Cephe kaplaması, batch tutarlılığı gerektiren uygulamalar için ideal."
+                    interp_text = T('uni_interp_high')
                     interp_color = '#22c55e'
                 elif u['homogeneity_score_0_10'] >= 6:
-                    interp_text = "Bu taş **kabul edilebilir homojenlikte**. Dekoratif kullanım için uygun, fakat kritik renk eşleştirme gerekiyorsa örnek değiştirmek faydalı olabilir."
+                    interp_text = T('uni_interp_mid')
                     interp_color = '#3b82f6'
                 else:
-                    interp_text = "Bu taş **belirgin renk heterojenliği** gösteriyor (örn. bantlı yapı, fosil içeriği, alterasyon). Bu, doğal karakter olabilir ama tutarlılık kritikse alternatif batch düşünülmeli."
+                    interp_text = T('uni_interp_low')
                     interp_color = '#eab308'
                 
                 st.markdown(
                     f'<div style="background:{interp_color}22; border-left:4px solid {interp_color}; '
                     f'padding:12px 16px; border-radius:4px; margin-top:8px;">'
-                    f'<b>Bilimsel Yorum:</b> {interp_text}'
+                    f'<b>{T("uni_sci_interp")}:</b> {interp_text}'
                     f'</div>', unsafe_allow_html=True)
                 
                 # Pre/Post karşılaştırma kaydetme
                 st.markdown('---')
                 save_col1, save_col2 = st.columns(2)
                 with save_col1:
-                    if st.button('💾 Pre-test referansı olarak kaydet', use_container_width=True):
+                    if st.button(T('uni_save_pre'), use_container_width=True):
                         st.session_state.uniformity_pre = u
-                        st.success('✓ Pre-test uniformity kaydedildi')
+                        st.success(T('uni_saved_pre'))
                 with save_col2:
-                    if st.button('💾 Post-test sonuç olarak karşılaştır', use_container_width=True):
+                    if st.button(T('uni_save_post'), use_container_width=True):
                         if 'uniformity_pre' in st.session_state:
                             comp = cs.compare_uniformity(st.session_state.uniformity_pre, u)
                             st.session_state.uniformity_compare = comp
                         else:
-                            st.warning('Önce pre-test referansı kaydet.')
+                            st.warning(T('uni_warn_pre'))
                 
                 # Karşılaştırma sonucu
                 if 'uniformity_compare' in st.session_state and st.session_state.uniformity_compare:
                     comp = st.session_state.uniformity_compare
-                    st.markdown('**🔄 Pre vs Post Karşılaştırma:**')
+                    st.markdown('**' + T('uni_compare_title') + '**')
                     cc1, cc2, cc3 = st.columns(3)
                     cc1.metric('Δ Mean L*', f'{comp["delta_mean_L"]:+.2f}')
                     cc2.metric('Δ Homogeneity', f'{comp["delta_homogeneity"]:+.2f}')
                     cc3.metric('Mean Color ΔE-2000', f'{comp["mean_color_delta_e_2000"]:.2f}',
-                                help=comp['mean_color_interpretation'])
-                    st.caption(f'**Görsel Hasar Yorumu:** {comp["mean_color_interpretation"]}')
+                                help=translate_cs(comp['mean_color_interpretation']))
+                    st.caption(f'**{T("uni_damage_interp")}:** {translate_cs(comp["mean_color_interpretation"])}')
                 
                 # JSON export
-                with st.expander('📥 Uniformity sonucunu JSON olarak indir'):
+                with st.expander(T('uni_json_expander')):
                     import json as _json
                     uni_json = safe_json_dumps(u, ensure_ascii=False, indent=2)
                     st.download_button('🗂️ uniformity.json', uni_json.encode('utf-8'),
                                         file_name=f'uniformity_{meta.get("source_image","custom")}.json',
                                         mime='application/json', use_container_width=True)
         else:
-            st.info('Önce bir görüntü yükle.')
+            st.info(T('uni_need_image'))
 
 # ============================================================
 # AGING ANALIZI Ana Panel Sonuclar
 # ============================================================
 if app_mode == 'aging' and 'aging_results' in st.session_state and st.session_state.aging_results:
     st.divider()
-    with st.expander('Yaslandirma Karsilastirma Sonuclari (Pre/Post)', expanded=True):
+    with st.expander(T('aging_results_title'), expanded=True):
         ar = st.session_state.aging_results
         pairs = ar['pairs']
         agg = ar['aggregate']
         n = agg['n']
         
-        st.caption(str(n) + ' numune | ' + str(ar['method']))
+        st.caption(T('aging_n_samples').format(n=n, method=str(ar['method'])))
         
         # Genel ozet
-        st.markdown('##### Genel Ozet')
+        st.markdown(T('general_summary'))
         sc1, sc2, sc3, sc4 = st.columns(4)
-        sc1.metric('Ortalama dE', '{:.2f} +/- {:.2f}'.format(agg['delta_e']['mean'], agg['delta_e']['std']))
-        sc2.metric('Min/Max dE', '{:.2f} / {:.2f}'.format(agg['delta_e']['min'], agg['delta_e']['max']))
-        sc3.metric('Ortalama dL*', '{:+.2f}'.format(agg['delta_L']['mean']))
-        sc4.metric('CV (dE)', '%{:.0f}'.format(agg['delta_e']['cv_pct']))
+        sc1.metric(T('metric_mean_dE'), '{:.2f} +/- {:.2f}'.format(agg['delta_e']['mean'], agg['delta_e']['std']))
+        sc2.metric(T('metric_minmax_dE'), '{:.2f} / {:.2f}'.format(agg['delta_e']['min'], agg['delta_e']['max']))
+        sc3.metric(T('metric_mean_dL'), '{:+.2f}'.format(agg['delta_L']['mean']))
+        sc4.metric(T('metric_cv_dE'), '%{:.0f}'.format(agg['delta_e']['cv_pct']))
         
         # Per-pair tablo
-        st.markdown('##### Numune Karsilastirma Tablosu')
+        st.markdown(T('per_sample_table'))
         pair_rows = []
         for i, p in enumerate(pairs):
             pair_rows.append({
-                '#': i+1, 'Numune': p['sample_name'][:25],
+                '#': i+1, T('col_sample'): p['sample_name'][:25],
                 'Pre': p['pre_color_hex'], 'Post': p['post_color_hex'],
                 'dL*': p['delta_L'], 'da*': p['delta_a'], 'db*': p['delta_b'],
                 'dC*': p['delta_C'], 'dH*': p['delta_H'], 'dE': p['delta_e'],
-                'Sinif': p['classification'],
+                T('col_class'): translate_cs(p['classification']),
             })
         pair_df = pd.DataFrame(pair_rows)
         st.dataframe(pair_df, use_container_width=True, hide_index=True)
         
         # Swatch grid
-        st.markdown('##### Renk Karsilastirma (Pre / Post)')
+        st.markdown(T('color_compare_section'))
         swatch_parts = ['<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">']
         for p in pairs:
             if p['delta_e']<1: dc='#22c55e'
@@ -1797,7 +2320,7 @@ if app_mode == 'aging' and 'aging_results' in st.session_state and st.session_st
         st.markdown(''.join(swatch_parts), unsafe_allow_html=True)
         
         # Bar chart SVG
-        st.markdown('##### Numune x dE Bar Chart')
+        st.markdown(T('bar_chart_section'))
         bar_w = 700
         bar_h = max(180, 35 * n + 60)
         max_de = max(p['delta_e'] for p in pairs) * 1.15 + 1
@@ -1826,28 +2349,28 @@ if app_mode == 'aging' and 'aging_results' in st.session_state and st.session_st
         svg.append('<text x="' + str(mean_x) + '" y="' + str(bar_h-5) + '" fill="#fff" font-size="12" text-anchor="middle">mean=' + '{:.2f}'.format(agg['delta_e']['mean']) + '</text>')
         svg.append('</svg>')
         st.markdown(''.join(svg), unsafe_allow_html=True)
-        st.caption('Dikey kesikli cizgiler perceptual esiklerdir: 1=just noticeable, 3.5=barely visible, 5=clear, 10=marked')
+        st.caption(T('bar_chart_caption'))
         
         # Istatistik 4 sekme
-        st.markdown('##### Istatistiksel Analiz (Paired)')
+        st.markdown(T('stat_analysis_section'))
         tab_dE, tab_L, tab_a, tab_b = st.tabs(['dE-2000', 'dL* Lightness', 'da* Green-Red', 'db* Blue-Yellow'])
         
         def render_stat(t):
             if 'error' in t:
                 st.warning(t['error']); return
             tc1, tc2, tc3, tc4 = st.columns(4)
-            tc1.metric('Test', t['test_name'].split('(')[0].strip() if t.get('test_name') else '-')
+            tc1.metric(T('stat_test_label'), t['test_name'].split('(')[0].strip() if t.get('test_name') else '-')
             p_val = t.get('p_value')
             p_disp = '<0.001' if p_val and p_val < 0.001 else ('{:.4f}'.format(p_val) if p_val else '-')
-            tc2.metric('p-deger', p_disp, 'Anlamli' if t.get('is_significant') else ('Anlamsiz' if t.get('is_significant') is not None else None))
-            tc3.metric('Cohen d', '{:.2f}'.format(t['cohen_d']) if t.get('cohen_d') else '-',
+            tc2.metric(T('stat_pvalue'), p_disp, T('stat_significant') if t.get('is_significant') else (T('stat_nonsignificant') if t.get('is_significant') is not None else None))
+            tc3.metric(T('stat_cohen_d'), '{:.2f}'.format(t['cohen_d']) if t.get('cohen_d') else '-',
                        t.get('cohen_d_interpretation','').split(' (')[0])
             ci_str = '[{:.2f}, {:.2f}]'.format(t['ci_95_low'], t['ci_95_high']) if t.get('ci_95_low') is not None else '-'
-            tc4.metric('95% CI', ci_str)
+            tc4.metric(T('stat_ci'), ci_str)
             st.markdown('**Test:** ' + str(t.get('test_name','-')) + ' | stat=`' + str(t.get('test_statistic','-')) + '`')
-            normal_str = 'Normal kabul' if t.get('is_normal_distribution') else 'Normal degil (non-param)'
+            normal_str = T('stat_normal_yes') if t.get('is_normal_distribution') else T('stat_normal_no')
             st.markdown('**Shapiro-Wilk p:** `' + str(t.get('normality_shapiro_p','-')) + '` -> ' + normal_str)
-            st.markdown('**Ortalama fark:** `' + str(t.get('mean_diff','-')) + '` +/- `' + str(t.get('std_diff','-')) + '`')
+            st.markdown('**' + T('ag_mean_diff') + ':** `' + str(t.get('mean_diff','-')) + '` +/- `' + str(t.get('std_diff','-')) + '`')
         
         with tab_dE: render_stat(ar['stat_test_dE'])
         with tab_L:  render_stat(ar['stat_test_L'])
@@ -1855,22 +2378,22 @@ if app_mode == 'aging' and 'aging_results' in st.session_state and st.session_st
         with tab_b:  render_stat(ar['stat_test_b'])
         
         # Otomatik yorum
-        st.markdown('##### Otomatik Bilimsel Yorum')
+        st.markdown('##### ' + T('ag_auto_interp_hdr'))
         interp = aa.auto_interpret(agg, ar['stat_test_dE'])
         if interp['damage_severity']=='minimal': damage_color='#22c55e'
         elif 'hafif' in interp['damage_severity']: damage_color='#3b82f6'
         elif 'orta' in interp['damage_severity']: damage_color='#eab308'
         elif 'belirgin' in interp['damage_severity']: damage_color='#f97316'
         else: damage_color='#ef4444'
-        st.markdown('<div style="background:' + damage_color + '22; border-left:4px solid ' + damage_color + '; padding:12px 16px; border-radius:4px; margin:8px 0;"><b>TR (Tartisma icin):</b><br>' + interp['summary_tr'] + '</div>', unsafe_allow_html=True)
-        st.markdown('<div style="background:#1f2937; border-left:4px solid #6366f1; padding:12px 16px; border-radius:4px; margin:8px 0; color:#fff;"><b>EN (Paper-ready):</b><br>' + interp['paper_ready_en'] + '</div>', unsafe_allow_html=True)
+        st.markdown('<div style="background:' + damage_color + '22; border-left:4px solid ' + damage_color + '; padding:12px 16px; border-radius:4px; margin:8px 0;"><b>' + T('label_tr_discussion') + '</b><br>' + interp['summary_tr'] + '</div>', unsafe_allow_html=True)
+        st.markdown('<div style="background:#1f2937; border-left:4px solid #6366f1; padding:12px 16px; border-radius:4px; margin:8px 0; color:#fff;"><b>' + T('label_en_paper_ready') + '</b><br>' + interp['paper_ready_en'] + '</div>', unsafe_allow_html=True)
         
         # Export
         st.markdown('---')
-        st.markdown('##### Indirme Secenekleri')
+        st.markdown(T('download_options'))
         ec1, ec2, ec3, ec4 = st.columns(4)
         with ec1:
-            st.download_button('Per-pair CSV', pair_df.to_csv(index=False).encode('utf-8'),
+            st.download_button(T('btn_per_pair_csv'), pair_df.to_csv(index=False).encode('utf-8'),
                 file_name='aging_per_pair.csv', mime='text/csv', use_container_width=True)
         with ec2:
             import json as _json
@@ -1878,7 +2401,7 @@ if app_mode == 'aging' and 'aging_results' in st.session_state and st.session_st
                 'statistics':{'dE':ar['stat_test_dE'],'L*':ar['stat_test_L'],'a*':ar['stat_test_a'],'b*':ar['stat_test_b']},
                 'interpretation':interp,
                 'metadata':{'method':ar['method'],'depth':ar['depth'],'n':n}}, ensure_ascii=False, indent=2)
-            st.download_button('Full JSON', full_json.encode('utf-8'),
+            st.download_button(T('btn_full_json'), full_json.encode('utf-8'),
                 file_name='aging_full_results.json', mime='application/json', use_container_width=True)
         with ec3:
             md_lines = [
@@ -1896,7 +2419,7 @@ if app_mode == 'aging' and 'aging_results' in st.session_state and st.session_st
                 '|' + '|'.join('---' for _ in pair_df.columns) + '|',
             ] + ['| ' + ' | '.join(str(v) for v in row) + ' |' for row in pair_df.values.tolist()] + [
             ]
-            st.download_button('Markdown rapor', '\n'.join(md_lines).encode('utf-8'),
+            st.download_button(T('btn_md_report'), '\n'.join(md_lines).encode('utf-8'),
                 file_name='aging_report.md', mime='text/markdown', use_container_width=True)
         with ec4:
             para_lines = ['COLOR CHANGE ANALYSIS','','TURKISH:', interp['summary_tr'],'',
@@ -1917,57 +2440,35 @@ if app_mode == 'aging' and 'aging_results' in st.session_state and st.session_st
 if app_mode == 'collage':
     # Bos durum mesaji
     if 'collage_result' not in st.session_state or st.session_state.collage_result is None:
-        st.info('👈 Soldan **Kolaj Oluşturucu** sekmesinden görüntüleri yükle ve ayarları yap.')
-        st.markdown('''
-        ### 🖼️ Kolaj Oluşturucu — Hızlı Başlangıç
-        1. **Mod seç:** Manuel / Quick (Aging'den) / Template
-        2. **Grid boyutu** belirle (satır × sütun)
-        3. **Görüntüleri yükle** (toplu drag&drop alfabetik sıraya göre dağıtılır)
-        4. **Etiket içeriği** seç (Sample ID, % değerleri, ΔE...)
-        5. **Etiket pozisyonu** seç:
-           - **inside_*** → görsel üzerinde kontrastlı banner
-           - **outside_*** → SEM tarzı, görsel dışında beyaz alan
-           - **none** → sadece görsel
-        6. **Sütun başlıkları** + opsiyonel satır etiketleri
-        7. **Dergi presetı** seç (Elsevier/Springer/ACS tek-veya çift-sütun)
-        8. **DPI** seç (300 = print standart, 600 = ultra)
-        9. **🎨 Kolajı Oluştur** → ana panelde önizleme + indirme
-
-        ### Çıktı formatları
-        - **PNG** (default, baskı kalitesi)
-        - **PDF** (vektör + raster, Adobe Acrobat)
-        - **SVG** (Inkscape'te düzenlenebilir, PNG-embed)
-        - **TIFF** (LZW compression, akademik dergi standart)
-
-        ### Standartlar
-        Kolaj boyutları **Elsevier/Springer/ACS** dergi figür yönergelerine uygundur 
-        (8.5 cm tek-sütun, 17.5 cm çift-sütun @ 300 DPI).
-        ''')
+        st.info(('👈 From the left **Collage Builder** tab, upload images and configure settings.'
+                  if st.session_state.get('lang','en')=='en'
+                  else '👈 Soldan **Kolaj Oluşturucu** sekmesinden görüntüleri yükle ve ayarları yap.'))
+        st.markdown(T('collage_quickstart_md'))
     else:
         st.divider()
-        with st.expander('🖼️ Oluşturulan Kolaj — Önizleme ve İndirme', expanded=True):
+        with st.expander(T('collage_panel_title'), expanded=True):
             collage = st.session_state.collage_result
             meta = st.session_state.collage_meta
             
-            cs_info = '{} px (auto-fit)'.format(meta.get('cell_size_px','?')) if meta.get('auto_fit') else '{} px (manuel)'.format(meta.get('cell_size_px','?'))
-            st.caption('Kolaj: {} × {} px | Hücre: {} | Hedef: {} cm @ {} DPI'.format(
+            cs_info = T('collage_cell_auto').format(meta.get('cell_size_px','?')) if meta.get('auto_fit') else T('collage_cell_manual').format(meta.get('cell_size_px','?'))
+            st.caption(T('collage_meta_line').format(
                 collage.size[0], collage.size[1], cs_info,
                 meta.get('target_w_cm', '?'), meta.get('dpi', 300)))
             
             # Preview
             preview_max = 900
             preview = utils.resize_for_display(np.array(collage), preview_max)
-            st.image(preview, caption='Önizleme (web çözünürlüğü)', width='stretch')
+            st.image(preview, caption=T('collage_preview_cap'), width='stretch')
             
             # Auto caption
-            st.markdown('##### 📝 Otomatik Caption (figür açıklaması)')
+            st.markdown('##### ' + T('collage_autocap_title'))
             ctx_map = {
                 'general': 'general',
                 'pore_segmentation': 'pore_segmentation',
                 'aging': 'aging',
                 'algorithm_comparison': 'algorithm_comparison',
             }
-            cap_context = st.selectbox('Bağlam', 
+            cap_context = st.selectbox(T('collage_context'), 
                 ['general', 'pore_segmentation', 'aging', 'algorithm_comparison'],
                 index=0, key='collage_caption_ctx')
             
@@ -1976,11 +2477,11 @@ if app_mode == 'collage':
                 col_headers=meta.get('col_headers'),
                 context=cap_context)
             
-            st.text_area('Caption (düzenleyebilirsin)', value=cap['en'], height=120, key='collage_caption_edit')
+            st.text_area(T('collage_caption_edit'), value=cap['en'], height=120, key='collage_caption_edit')
             
             # İndirme — multi-format
             st.markdown('---')
-            st.markdown('##### 📥 İndirilebilir Formatlar')
+            st.markdown('##### ' + T('collage_formats_title'))
             
             ec1, ec2, ec3, ec4 = st.columns(4)
             target_w = meta.get('target_w_cm', 17.5)
@@ -2015,4 +2516,4 @@ if app_mode == 'collage':
 # ALT BİLGİ
 # ============================================================
 st.divider()
-st.caption('Gözenek ve Renk Tespit Yazılımı v1.0 — 2026  |  Murat SERT et al. — AKÜ')
+st.caption(T('footer_text'))

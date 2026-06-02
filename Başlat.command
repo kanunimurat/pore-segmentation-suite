@@ -18,7 +18,7 @@ NC='\033[0m'
 clear
 echo ""
 echo -e "${BLUE}════════════════════════════════════════════════${NC}"
-echo -e "${BLUE}  🪨 Gözenek ve Renk Tespit Yazılımı v1.0     ${NC}"
+echo -e "${BLUE}  🪨 Gözenek ve Renk Tespit Yazılımı v1.2     ${NC}"
 echo -e "${BLUE}════════════════════════════════════════════════${NC}"
 echo ""
 echo -e "${GREEN}📁 Klasör:${NC} $SCRIPT_DIR"
