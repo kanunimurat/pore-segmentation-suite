@@ -1,59 +1,65 @@
-# 🪨 Gözenek ve Renk Tespit Yazılımı
+# 🪨 Pore Segmentation Suite
 
-**Travertenler (ve benzer doğal taşlar) için interaktif gözenek segmentasyon aracı.**
-Sürüm: 1.2 — 2026  
-Lisans: MIT  |  Geliştirici: Murat SERT, AKÜ
+**An interactive pore-segmentation tool for travertines (and similar natural stones).**
+Version: 1.2 — 2026  
+License: MIT  |  Developer: Murat SERT, AKU
 
----
-
-## ✨ Yenilikler (v1.2)
-
-- **Gözenek boyut dağılımı grafiği** (MIP benzeri, logaritmik eksen, D50, çözünürlük sınırı)
-- **Güvenilirlik rozeti** — gözeneklilik rejimine göre uyarı (<%2 / %2–8 / >%8)
-- **"Örnek görüntü dene"** demo butonu + tek tıkla **tüm çıktıları ZIP** indir
-- **Tema-duyarlı** inline-SVG grafikler (açık/koyu)
-- Sıcak turuncu görsel kimlik, ışıldayan marka yazısı, büyütülmüş okunabilir arayüz
-
-> Önceki: **v1.1** — TR/EN dil seçimi, çoklu-yöntem porozite yayılımı, karşılaştırma-kolaj.
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20416896.svg)](https://doi.org/10.5281/zenodo.20416896)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![cite](https://img.shields.io/badge/cite-CITATION.cff-blue)](CITATION.cff)
 
 ---
 
+## ✨ What's new (v1.2)
 
-## 🚀 Hızlı Başlangıç (3 Adım)
+- **Pore-size distribution chart** (MIP-like, logarithmic axis, D50, imaging-resolution limit)
+- **Reliability badge** — warning by porosity regime (<2% / 2–8% / >8%)
+- **"Try a sample image"** demo button + one-click **Download all outputs as ZIP**
+- **Theme-aware** inline-SVG charts (light/dark)
+- Warm orange visual identity, glowing brand title, larger and more readable interface
 
-### 1️⃣ İlk kurulum (sadece bir defa)
+> **This release (v1.2.0) DOI:** https://doi.org/10.5281/zenodo.20514039
 
-`İlk Kurulum.command` dosyasına **çift tıkla**.  
-(Sağ tık → Aç gerekirse — macOS güvenlik uyarısı çıkabilir)
-
-Bu, gerekli Python kütüphanelerini otomatik kurar (~2-3 dakika).
-
-### 2️⃣ Uygulamayı çalıştır
-
-`Başlat.command` dosyasına **çift tıkla**.  
-Veya `Gözenek Tespit.app` uygulamasına çift tıkla.
-
-Tarayıcın otomatik olarak `http://localhost:8501` adresinde açılır.
-
-### 3️⃣ Kullan
-
-- Sol panelden bir görüntü yükle (jpg/png/tif)
-- Taş tipini seç (KT/GT/NT/PT)
-- Algoritma seç (14 farklı yöntem mevcut)
-- Sliderları oyna, overlay anlık güncellenir
-- İyi parametre setini "💾 Bu parametreleri kaydet" ile sakla
+> Previous: **v1.1** — TR/EN language switch, multi-method porosity spread, comparison collage.
 
 ---
 
-## ⚠️ İlk Çalıştırmada macOS Güvenlik Uyarısı
 
-Mac'in indirilmiş yazılımları otomatik bloke edebilir. Eğer "açılamaz" hatası çıkarsa:
+## 🚀 Quick Start (3 steps)
 
-**Çözüm 1 (kolay):** Dosyaya **sağ tık → Aç** seçeneği ile aç. İlk açılıştan sonra normal çift tık çalışır.
+### 1️⃣ First-time setup (only once)
 
-**Çözüm 2 (kalıcı):** Terminal'de:
+**Double-click** `İlk Kurulum.command`.  
+(Use right-click → Open if needed — macOS may show a security warning.)
+
+This installs the required Python libraries automatically (~2-3 minutes).
+
+### 2️⃣ Run the app
+
+**Double-click** `Başlat.command`.  
+Or double-click the `Gözenek Tespit.app` application.
+
+Your browser opens automatically at `http://localhost:8501`.
+
+### 3️⃣ Use it
+
+- Upload an image from the left panel (jpg/png/tif)
+- Pick a stone type (KT/GT/NT/PT)
+- Choose an algorithm (14 methods available)
+- Move the sliders — the overlay updates in real time
+- Save a good parameter set with "💾 Save these parameters"
+
+---
+
+## ⚠️ macOS Security Warning on First Run
+
+macOS may block downloaded software. If you get a "cannot be opened" error:
+
+**Option 1 (easy):** Open the file via **right-click → Open**. After the first launch, normal double-click works.
+
+**Option 2 (permanent):** In Terminal:
 ```bash
-cd "Gözenek ve Renk Tespit Yazılımı"
+cd pore-segmentation-suite
 xattr -dr com.apple.quarantine Başlat.command
 xattr -dr com.apple.quarantine "İlk Kurulum.command"
 xattr -dr com.apple.quarantine "Gözenek Tespit.app"
@@ -61,148 +67,154 @@ xattr -dr com.apple.quarantine "Gözenek Tespit.app"
 
 ---
 
-## 🎨 14 Algoritma — 5 Kategori
+## 🎨 14 Algorithms — 5 Categories
 
-### 🔵 Klasik Eşikleme
-- **Sauvola** — Yerel adaptif eşik
-- **Multi-Otsu** — Otomatik multi-level
+### 🔵 Classical Thresholding
+- **Sauvola** — Local adaptive threshold
+- **Multi-Otsu** — Automatic multi-level
 - **Auto Threshold** — Triangle / Yen / IsoData / Otsu / Mean / Minimum
 
 ### 🟢 Blob & Region Detection
-- **DoG** — Difference of Gaussians (multi-scale opsiyonu var)
+- **DoG** — Difference of Gaussians (multi-scale option available)
 - **MSER** — Maximally Stable Extremal Regions
-- **Bottom-Hat Morphology** — Küçük koyu detayları izole eder
-- **Frangi Vesselness** — Uzamış/bağlantılı yapılar
-- **Watershed Marker-Controlled** — Yapışık pore'ları ayırır
+- **Bottom-Hat Morphology** — Isolates small dark details
+- **Frangi Vesselness** — Elongated/connected structures
+- **Watershed (Marker-Controlled)** — Separates touching pores
 
-### 🟣 Renk & Clustering Tabanlı
-- **Color Distance** — Renk paleti tabanlı
-- **GMM** — Gaussian Mixture Model (probabilistik)
+### 🟣 Color & Clustering Based
+- **Color Distance** — Color-palette based
+- **GMM** — Gaussian Mixture Model (probabilistic)
 
-### 🤝 Hibrit
+### 🤝 Hybrid
 - **DoG + Color Filter**
 - **MSER + Color Filter**
 
-### 🚀 Modern Deep Learning (opsiyonel)
+### 🚀 Modern Deep Learning (optional)
 - **SAM 2** (Segment Anything Model 2, Meta 2024)
 - **CellPose 3** (Pretrained generalist)
 
-**DL için ek kurulum:**
+**Extra setup for DL:**
 ```bash
 pip3 install -r requirements-modern.txt
 ```
-(İlk Kurulum.command bunu da soracak.)
+(İlk Kurulum.command will also offer this.)
 
 ---
 
-## 🎨 Renk Paleti Sistemi
+## 🎨 Color Palette System
 
-Her taş için **7 dominant renk** (K-means kümeleme):
-- Otomatik yükleme: `palettes/{KT,GT,NT,PT}.json`
-- Görüntüden yeni K-means hesaplama (tek tık)
-- Pixel-tıklama renk seçici ("Bu noktadaki rengi pore listesine ekle")
-- Her rengin pore/matriks olarak işaretlenmesi (checkbox)
+**7 dominant colors** per stone (K-means clustering):
+- Auto-load: `palettes/{KT,GT,NT,PT}.json`
+- Compute a new K-means palette from the image (one click)
+- Pixel-click color picker ("Add the color at this point to the pore list")
+- Mark each color as pore/matrix (checkbox)
 
-## 🚫 Yanlış-Pozitif Filtreleri
+## 🚫 False-Positive Filters
 
-- **Min pore alanı** (px)
-- **Eccentricity** — Bantları reddet
-- **Solidity** — Düzensiz şekilleri reddet
-- **Doku std** — Fosil/mineralleri reddet (NT için kritik)
-- **Karanlık olmalı** — Median altı
+- **Min pore area** (px)
+- **Eccentricity** — Reject bands
+- **Solidity** — Reject irregular shapes
+- **Texture std** — Reject fossils/minerals (critical for NT)
+- **Must be dark** — Below median
 
-## 🎯 Overlay Özelleştirme
+## 🎯 Overlay Customization
 
-- **2 stil**: Dolgu (saydam) / Sadece sınırlar
-- **12 renk preseti** + Auto + Custom (hex picker)
+- **2 styles**: Fill (transparent) / Boundaries only
+- **12 color presets** + Auto + Custom (hex picker)
 - **Alpha slider** (0.1 — 0.95)
-- **Sınır kalınlığı slider** (1 — 8 px)
+- **Boundary thickness slider** (1 — 8 px)
 
 ---
 
-## 📁 Klasör Yapısı
+## 📁 Folder Structure
 
 ```
-Gözenek ve Renk Tespit Yazılımı/
-├── 🚀 Başlat.command           ← ÇİFT TIKLA UYGULAMAYI BAŞLAT
-├── 🛠️ İlk Kurulum.command      ← İlk kez için
-├── 📱 Gözenek Tespit.app/       ← .app bundle (icon ile)
-├── 📄 pore_tuner.py             ← Ana Streamlit uygulaması
-├── 📁 modules/                  ← Backend modülleri
-│   ├── segmentation.py          (14 algoritma)
-│   ├── filters.py               (yanlış-pozitif eleme)
-│   ├── palettes.py              (palet I/O)
-│   ├── presets.py               (parametre kaydet/yükle)
-│   └── utils.py                 (yardımcı)
-├── 📁 palettes/                 ← Per-stone renk palet JSON'ları
+pore-segmentation-suite/
+├── 🚀 Başlat.command            ← DOUBLE-CLICK TO LAUNCH THE APP
+├── 🛠️ İlk Kurulum.command       ← First-time setup
+├── 📱 Gözenek Tespit.app/        ← .app bundle (with icon)
+├── 📄 pore_tuner_v2.py           ← Main Streamlit application
+├── 📁 modules/                   ← Backend modules
+│   ├── segmentation.py           (14 algorithms)
+│   ├── filters.py                (false-positive removal)
+│   ├── palettes.py               (palette I/O)
+│   ├── presets.py                (save/load parameters)
+│   ├── color_science.py          (Lab / ΔE color metrics)
+│   ├── aging_analysis.py         (pre/post ΔE analysis)
+│   ├── comparison.py             (multi-method comparison)
+│   ├── collage_builder.py        (comparison collage)
+│   ├── pore_size.py              (pore-size distribution)
+│   ├── i18n.py                   (TR/EN localization)
+│   └── utils.py                  (helpers)
+├── 📁 palettes/                  ← Per-stone color palette JSONs
 │   ├── KT.json   (Karaman Light)
 │   ├── GT.json   (Emirdağ Silver)
 │   ├── NT.json   (Antalya Noche)
 │   └── PT.json   (Kütahya Pembe)
-├── 📁 presets/                  ← Kullanıcı parametre presetleri
-├── 📁 outputs/                  ← Batch işlem çıktıları
-├── 📁 assets/                   ← İkon dosyaları (PNG, ICNS)
+├── 📁 sample_images/             ← Demo travertine image
+├── 📁 presets/                   ← User parameter presets
+├── 📁 assets/                    ← Icon files (PNG, ICNS)
 │
-├── 📄 README.md                 ← Bu dosya
-├── 📄 LICENSE                   ← MIT
-├── 📄 CITATION.cff              ← Modern citation format
-├── 📄 CHANGELOG.md              ← Sürüm geçmişi
-├── 📄 ZENODO_SETUP.md           ← Atıf altyapısı kılavuzu
-├── 📄 requirements.txt          ← Zorunlu Python deps
-└── 📄 requirements-modern.txt   ← Opsiyonel DL deps (SAM 2, CellPose)
+├── 📄 README.md                  ← This file
+├── 📄 LICENSE                    ← MIT
+├── 📄 CITATION.cff               ← Modern citation format
+├── 📄 CHANGELOG.md               ← Version history
+├── 📄 ZENODO_SETUP.md            ← Citation infrastructure guide
+├── 📄 requirements.txt           ← Required Python deps
+└── 📄 requirements-modern.txt    ← Optional DL deps (SAM 2, CellPose)
 ```
 
 ---
 
-## 🆘 Sorun Giderme
+## 🆘 Troubleshooting
 
 **"streamlit: command not found"**
-→ Terminal'de: `python3 -m pip install -r requirements.txt`
+→ In Terminal: `python3 -m pip install -r requirements.txt`
 
-**"Permission denied" (.command dosyasına çift tıklayınca)**
-→ Terminal'de: `chmod +x "Başlat.command"`
+**"Permission denied" (when double-clicking a .command file)**
+→ In Terminal: `chmod +x "Başlat.command"`
 
-**Uygulama açıldı ama yavaş**
-→ Çok büyük görüntülerde (>3000 px) işleme yavaş. Önce küçült: 1500 px civarı ideal.
+**App opened but is slow**
+→ Processing is slow on very large images (>3000 px). Downscale first: around 1500 px is ideal.
 
-**SAM 2 / CellPose seçildi ama "yüklü değil" hatası**
-→ `pip3 install -r requirements-modern.txt` (yaklaşık 500MB-2GB indirir)
+**SAM 2 / CellPose selected but "not installed" error**
+→ `pip3 install -r requirements-modern.txt` (downloads ~500MB-2GB)
 
-**Tarayıcı otomatik açılmadı**
-→ Manuel: http://localhost:8501
+**Browser did not open automatically**
+→ Manually: http://localhost:8501
 
 ---
 
-## 📚 Atıf
+## 📚 Citation
 
-Bu aracı kullanırsanız lütfen şu şekilde atıf yapın:
+If you use this tool, please cite it as:
 
-> Sert, M. ve diğ. (2026). *Gözenek ve Renk Tespit Yazılımı v1.2:*  
+> Sert, M. (2026). *Pore Segmentation Suite v1.2:*  
 > *An open-source interactive tool for travertine pore segmentation.*  
-> Zenodo. https://doi.org/10.5281/zenodo.XXXXXXX
+> Zenodo. https://doi.org/10.5281/zenodo.20514039
 
-Ve eşlik eden metodoloji makalesi:
+And the accompanying methodology paper:
 
-> Sert, M. ve diğ. (2026). *Per-stone adaptive pore segmentation of travertines:*  
+> Sert, M. (2026). *Per-stone adaptive pore segmentation of travertines:*  
 > *A comparative benchmark of classical thresholding, extremal regions,*  
-> *and modern foundation models.*  
-> Construction and Building Materials. [in preparation]
+> *and modern foundation models.* (in preparation)
 
-`CITATION.cff` dosyası GitHub tarafından otomatik tanınır.
+The `CITATION.cff` file is automatically recognized by GitHub.
 
 ---
 
-## 📞 İletişim
+## 📞 Contact
 
-**Dr. Öğr. Üyesi Murat SERT**  
-Afyon Kocatepe Üniversitesi  
-Mermer ve Doğaltaş Teknolojileri Uygulama ve Araştırma Merkezi  
+**Assist. Prof. Dr. Murat SERT**  
+Afyon Kocatepe University  
+Marble and Natural Stone Technologies Application and Research Center  
+Department of Mining Engineering  
 📧 msert@aku.edu.tr  
-🔬 Proje: 24.MÜH.03 — AKÜ BAP
+🔬 Project: 24.MÜH.03 — AKÜ BAP (Scientific Research Projects)
 
 ---
 
-## 🤝 Katkı
+## 🤝 Contributing
 
-Yeni algoritma, yeni filtre veya yeni özellik önerin varsa GitHub issue aç veya doğrudan e-posta gönder.  
-Bu yazılım bilim insanları topluluğu için tasarlandı — kullanım örneklerin değerlidir.
+If you have a new algorithm, a new filter, or a new feature in mind, open a GitHub issue or email directly.  
+This software was built for the scientific community — your use cases are valuable.

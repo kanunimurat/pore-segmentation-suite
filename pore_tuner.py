@@ -705,7 +705,7 @@ with st.sidebar:
         
         ---
         **Bu aracı kullanırsanız lütfen atıf yapın:**  
-        > Sert, M. ve diğ. (2026). *Gözenek ve Renk Tespit Yazılımı v1.0.*  
+        > Sert, M. (2026). *Gözenek ve Renk Tespit Yazılımı v1.0.*  
         > Afyon Kocatepe Üniversitesi. (Hazırlık aşamasında)
         
         **İletişim:** msert@aku.edu.tr
@@ -1521,4 +1521,4 @@ if 'aging_results' in st.session_state and st.session_state.aging_results:
 # ALT BİLGİ
 # ============================================================
 st.divider()
-st.caption('Gözenek ve Renk Tespit Yazılımı v1.0 — 2026  |  Murat SERT et al. — AKÜ')
+st.caption('Gözenek ve Renk Tespit Yazılımı v1.0 — 2026  |  Murat SERT — AKÜ')

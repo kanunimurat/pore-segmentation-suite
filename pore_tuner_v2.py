@@ -1308,7 +1308,7 @@ with st.sidebar:
 
         ---
         **If you use this tool, please cite:**
-        > Sert, M. et al. (2026). *Pore Segmentation Suite v1.2.*
+        > Sert, M. (2026). *Pore Segmentation Suite v1.2.*
         > Afyon Kocatepe University. (In preparation)
 
         **Contact:** msert@aku.edu.tr
@@ -1335,7 +1335,7 @@ with st.sidebar:
 
         ---
         **Bu aracı kullanırsanız lütfen atıf yapın:**
-        > Sert, M. ve diğ. (2026). *Gözenek ve Renk Tespit Yazılımı v1.2.*
+        > Sert, M. (2026). *Gözenek ve Renk Tespit Yazılımı v1.2.*
         > Afyon Kocatepe Üniversitesi. (Hazırlık aşamasında)
 
         **İletişim:** msert@aku.edu.tr

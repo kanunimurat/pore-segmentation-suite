@@ -68,4 +68,4 @@ echo -e "${BLUE}─────────────────────�
 echo ""
 
 # Streamlit'i başlat
-exec python3 -m streamlit run pore_tuner.py --server.headless=false --browser.gatherUsageStats=false
+exec python3 -m streamlit run pore_tuner_v2.py --server.headless=false --browser.gatherUsageStats=false

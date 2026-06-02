@@ -36,7 +36,7 @@ preferred-citation:
       given-names: Murat
   version: 1.2.0
   year: 2026
-  doi: "10.5281/zenodo.20416896"
+  doi: "10.5281/zenodo.20514039"
 references:
   - type: article
     title: "Per-stone adaptive pore segmentation of travertines: A comparative benchmark"

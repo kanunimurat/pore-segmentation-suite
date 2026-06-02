@@ -57,7 +57,7 @@ Methods bölümünün sonuna:
 > in this study, "Gözenek ve Renk Tespit Yazılımı" v1.0, is freely available
 > at [GitHub URL] under MIT license. A versioned release is archived on
 > Zenodo (DOI: 10.5281/zenodo.XXXXXXX). For software-specific implementation
-> details, see the companion software paper (Sert et al., 2026, SoftwareX,
+> details, see the companion software paper (Sert, 2026, SoftwareX,
 > in preparation).
 
 ## 7. Companion Software Paper
