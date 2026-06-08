@@ -278,8 +278,22 @@ def safe_json_dumps(obj, **kwargs):
     kwargs.setdefault('ensure_ascii', False)
     return json.dumps(obj, **kwargs)
 
-st.title(T('app_title'))
-st.caption(T('app_caption'))
+_lang_hdr = st.session_state.get('lang', 'en')
+_hdr_stat = '14 algorithms · 4 modes' if _lang_hdr == 'en' else '14 algoritma · 4 mod'
+_hc1, _hc2 = st.columns([3, 2])
+with _hc1:
+    st.title(T('app_title'))
+    st.caption(T('app_caption'))
+with _hc2:
+    st.markdown(
+        """<div style="text-align:right; padding-top:22px; line-height:2.1;">
+  <span style="background:#FFF1E6; color:#C75B12; border:1px solid #F2C9A6; border-radius:6px; padding:3px 10px; font-size:.85rem; font-weight:700; white-space:nowrap;">v1.2.1</span>
+  <span style="background:#FFF1E6; color:#C75B12; border:1px solid #F2C9A6; border-radius:6px; padding:3px 10px; font-size:.85rem; font-weight:700; white-space:nowrap;">MIT</span>
+  <a href="https://doi.org/10.5281/zenodo.20514039" target="_blank" title="10.5281/zenodo.20514039" style="color:#E8833A; font-weight:700; font-size:.85rem; text-decoration:none; border:1px solid #F2C9A6; border-radius:6px; padding:3px 10px; white-space:nowrap;">Zenodo DOI &#8599;</a>
+  <a href="https://github.com/kanunimurat/pore-segmentation-suite" target="_blank" style="color:#E8833A; font-weight:700; font-size:.85rem; text-decoration:none; border:1px solid #F2C9A6; border-radius:6px; padding:3px 10px; white-space:nowrap;">GitHub &#8599;</a>
+  <div style="color:#9aa0a6; font-size:.8rem; margin-top:8px;">__STAT__</div>
+</div>""".replace('__STAT__', _hdr_stat),
+        unsafe_allow_html=True)
 
 
 # ============================================================
@@ -434,69 +448,7 @@ with st.sidebar:
 
         st.markdown('---')
         
-        # ──────────── 2. TAŞ & PALET ────────────
-        st.markdown(T('stone_palette'))
-        
-        available_palettes = palettes.list_palettes()
-        stone_options = available_palettes + [T('stone_custom_new')]
-        selected_stone = st.selectbox(T('stone_code'), stone_options, key='stone_select',
-                                       label_visibility='collapsed')
-        
-        if selected_stone != T('stone_custom_new') and (st.session_state.palette_data is None or 
-                                                    st.session_state.palette_data.get('stone_code') != selected_stone):
-            st.session_state.palette_data = palettes.load_palette(selected_stone)
-            st.session_state.selected_pore_indices = list(st.session_state.palette_data.get('pore_candidate_indices', [0,1]))
-        
-        # Yeni palet hesaplama
-        if st.session_state.image_rgb is not None:
-            if st.button(T('compute_palette'), use_container_width=True):
-                with st.spinner(T('computing')):
-                    colors = segmentation.extract_palette_kmeans(st.session_state.image_rgb, n_clusters=7)
-                    st.session_state.palette_data = {
-                        'stone_code': selected_stone if selected_stone != T('stone_custom_new') else 'CUSTOM',
-                        'stone_name': st.session_state.image_name or 'Custom',
-                        'n_clusters': 7,
-                        'colors': colors,
-                        'source': 'K-means from current image',
-                        'pore_candidate_indices': [0, 1],
-                    }
-                    st.session_state.selected_pore_indices = [0, 1]
-                    st.success(T('palette_updated'))
-        
-        # Palet gösterimi + checkbox'lar
-        if st.session_state.palette_data:
-            st.caption(f'**{st.session_state.palette_data.get("stone_name", "")}** — {st.session_state.palette_data["n_clusters"]} ' + T('dominant_colors_label'))
-            
-            new_selected = []
-            for i, c in enumerate(st.session_state.palette_data['colors']):
-                cols = st.columns([0.5, 2, 3])
-                with cols[0]:
-                    checked = st.checkbox('', value=(i in st.session_state.selected_pore_indices), 
-                                           key=f'pore_color_{i}', label_visibility='collapsed')
-                    if checked: new_selected.append(i)
-                with cols[1]:
-                    st.markdown(f'<div style="background:{c["hex"]};width:40px;height:25px;border:1px solid #888;border-radius:4px"></div>', 
-                                unsafe_allow_html=True)
-                with cols[2]:
-                    role = T('role_pore') if checked else (T('role_matrix') if c['brightness']>120 else '?')
-                    st.caption(f'`{c["hex"]}` ({c["fraction_pct"]:.1f}%) {role}')
-            st.session_state.selected_pore_indices = new_selected
-        
-        # Custom pore colors (görüntüden eklenmiş)
-        if st.session_state.custom_pore_colors:
-            st.caption(T('colors_from_image'))
-            for i, rgb in enumerate(st.session_state.custom_pore_colors):
-                hex_str = utils.rgb_to_hex(rgb)
-                cols = st.columns([1,3,1])
-                cols[0].markdown(f'<div style="background:{hex_str};width:30px;height:20px;border:1px solid #888"></div>', unsafe_allow_html=True)
-                cols[1].caption(f'`{hex_str}` RGB={rgb}')
-                if cols[2].button('❌', key=f'rm_custom_{i}'):
-                    st.session_state.custom_pore_colors.pop(i)
-                    st.rerun()
-        
-        st.markdown('---')
-        
-        # ──────────── 3. ALGORİTMA ────────────
+        # ──────────── 2. ALGORİTMA ────────────
         st.markdown(T('algorithm_section'))
         algo_categories = {
             T('family_classical_full'): [
@@ -639,6 +591,68 @@ with st.sidebar:
                 st.error(T('ps_cellpose_not_installed'))
                 st.code('pip install cellpose', language='bash')
                 st.caption(T('ps_restart_after_install'))
+        
+        st.markdown('---')
+        
+        # ──────────── 3. TAŞ & PALET ────────────
+        st.markdown(T('stone_palette'))
+        
+        available_palettes = palettes.list_palettes()
+        stone_options = available_palettes + [T('stone_custom_new')]
+        selected_stone = st.selectbox(T('stone_code'), stone_options, key='stone_select',
+                                       label_visibility='collapsed')
+        
+        if selected_stone != T('stone_custom_new') and (st.session_state.palette_data is None or 
+                                                    st.session_state.palette_data.get('stone_code') != selected_stone):
+            st.session_state.palette_data = palettes.load_palette(selected_stone)
+            st.session_state.selected_pore_indices = list(st.session_state.palette_data.get('pore_candidate_indices', [0,1]))
+        
+        # Yeni palet hesaplama
+        if st.session_state.image_rgb is not None:
+            if st.button(T('compute_palette'), use_container_width=True):
+                with st.spinner(T('computing')):
+                    colors = segmentation.extract_palette_kmeans(st.session_state.image_rgb, n_clusters=7)
+                    st.session_state.palette_data = {
+                        'stone_code': selected_stone if selected_stone != T('stone_custom_new') else 'CUSTOM',
+                        'stone_name': st.session_state.image_name or 'Custom',
+                        'n_clusters': 7,
+                        'colors': colors,
+                        'source': 'K-means from current image',
+                        'pore_candidate_indices': [0, 1],
+                    }
+                    st.session_state.selected_pore_indices = [0, 1]
+                    st.success(T('palette_updated'))
+        
+        # Palet gösterimi + checkbox'lar
+        if st.session_state.palette_data:
+            st.caption(f'**{st.session_state.palette_data.get("stone_name", "")}** — {st.session_state.palette_data["n_clusters"]} ' + T('dominant_colors_label'))
+            
+            new_selected = []
+            for i, c in enumerate(st.session_state.palette_data['colors']):
+                cols = st.columns([0.5, 2, 3])
+                with cols[0]:
+                    checked = st.checkbox('', value=(i in st.session_state.selected_pore_indices), 
+                                           key=f'pore_color_{i}', label_visibility='collapsed')
+                    if checked: new_selected.append(i)
+                with cols[1]:
+                    st.markdown(f'<div style="background:{c["hex"]};width:40px;height:25px;border:1px solid #888;border-radius:4px"></div>', 
+                                unsafe_allow_html=True)
+                with cols[2]:
+                    role = T('role_pore') if checked else (T('role_matrix') if c['brightness']>120 else '?')
+                    st.caption(f'`{c["hex"]}` ({c["fraction_pct"]:.1f}%) {role}')
+            st.session_state.selected_pore_indices = new_selected
+        
+        # Custom pore colors (görüntüden eklenmiş)
+        if st.session_state.custom_pore_colors:
+            st.caption(T('colors_from_image'))
+            for i, rgb in enumerate(st.session_state.custom_pore_colors):
+                hex_str = utils.rgb_to_hex(rgb)
+                cols = st.columns([1,3,1])
+                cols[0].markdown(f'<div style="background:{hex_str};width:30px;height:20px;border:1px solid #888"></div>', unsafe_allow_html=True)
+                cols[1].caption(f'`{hex_str}` RGB={rgb}')
+                if cols[2].button('❌', key=f'rm_custom_{i}'):
+                    st.session_state.custom_pore_colors.pop(i)
+                    st.rerun()
         
         st.markdown('---')
         
