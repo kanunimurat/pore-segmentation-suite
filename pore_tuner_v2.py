@@ -144,6 +144,26 @@ IS_CLOUD = os.path.abspath(__file__).startswith('/mount/src') or os.environ.get(
 # Örnek (demo) görüntü yolu ve yükleyici (#3)
 _SAMPLE_IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sample_images', 'sample_travertine.png')
 
+import io as _io
+_AGING_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sample_images', 'aging')
+_AGING_STONES = ['GT', 'KT', 'NT', 'PT']  # alfabetik — çiftleme tutarlı olsun
+
+class _NamedBytesIO(_io.BytesIO):
+    """st.file_uploader nesnesi gibi davranan, .name'li bellek-içi dosya."""
+    def __init__(self, data, name):
+        super().__init__(data)
+        self.name = name
+
+def _sample_aging_buffers(state):
+    """state='pre' veya 'post' — gömülü örnek before/after görsellerini döndürür."""
+    out = []
+    for code in _AGING_STONES:
+        fp = os.path.join(_AGING_DIR, f'{code}_{state}.jpg')
+        if os.path.exists(fp):
+            with open(fp, 'rb') as fh:
+                out.append(_NamedBytesIO(fh.read(), f'{code}_{state}.jpg'))
+    return out
+
 def _load_sample_image():
     if os.path.exists(_SAMPLE_IMG):
         st.session_state.image_rgb = utils.load_image(_SAMPLE_IMG)
@@ -202,7 +222,7 @@ if 'last_result' not in st.session_state:
 with st.sidebar:
     # ─── TOP BRANDING (üstte) ──────────────────────────────
     _brand_subtitle = 'v1.2'
-    _brand_name = 'Pore Segmentation Suite' if st.session_state.get('lang', 'en') == 'en' else 'Gözenek & Renk Tespit'
+    _brand_name = 'Pore Segmentation Suite' if st.session_state.get('lang', 'en') == 'en' else 'Gözenek ve Renk Tespit Aracı'
     st.markdown(f"""
     <div style="text-align:center; padding:12px 4px; margin-bottom:8px;
                 border-bottom:1px solid #444; border-radius:4px;">
@@ -739,7 +759,16 @@ with st.sidebar:
             key='aging_post_files', label_visibility='collapsed')
         if post_files:
             st.caption(f'✓ {len(post_files)} ' + T('ag_posttest_imgs'))
-        
+
+        # ─── Örnek before/after çiftleri (gömülü traverten numuneleri) ───
+        if st.button(T('ag_load_samples'), use_container_width=True, key='aging_load_samples'):
+            st.session_state['aging_use_samples'] = True
+        if st.session_state.get('aging_use_samples') and not pre_files and not post_files:
+            pre_files = _sample_aging_buffers('pre')
+            post_files = _sample_aging_buffers('post')
+            if pre_files and post_files:
+                st.caption('✓ ' + T('ag_samples_active'))
+
         # Eşitlik kontrolü
         n_pre = len(pre_files) if pre_files else 0
         n_post = len(post_files) if post_files else 0

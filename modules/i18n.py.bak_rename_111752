@@ -28,9 +28,9 @@ DEFAULT_LANG = 'en'
 
 TRANSLATIONS = {
     # ---------------------------------------------------------------- App meta
-    'app_title':            {'tr': '🪨 Gözenek ve Renk Tespit Aracı',
+    'app_title':            {'tr': '🪨 Gözenek ve Renk Tespit Yazılımı',
                              'en': '🪨 Pore Segmentation Suite'},
-    'app_caption':          {'tr': 'Doğaltaşlar için interaktif segmentasyon — DoG / MSER / Sauvola / Color-Distance + per-stone renk paleti',
+    'app_caption':          {'tr': 'Travertenler için interaktif segmentasyon — DoG / MSER / Sauvola / Color-Distance + per-stone renk paleti',
                              'en': 'Interactive segmentation for travertines — DoG / MSER / Sauvola / Color-Distance + per-stone color palettes'},
     'language':             {'tr': 'Dil', 'en': 'Language'},
 
@@ -579,8 +579,6 @@ TRANSLATIONS = {
     'ag_pretest_imgs': {'tr': 'pre-test görüntüsü', 'en': 'pre-test image(s)'},
     'ag_posttest_imgs': {'tr': 'post-test görüntüsü', 'en': 'post-test image(s)'},
     'ag_equal_required': {'tr': 'Eşit sayı gerekli', 'en': 'Equal counts required'},
-    'ag_load_samples': {'tr': '🧪 Örnek before/after çiftlerini yükle', 'en': '🧪 Load sample before/after pairs'},
-    'ag_samples_active': {'tr': '4 gömülü traverten çifti yüklendi (GT · KT · NT · PT) — Analizi çalıştırabilirsiniz', 'en': '4 bundled travertine pairs loaded (GT · KT · NT · PT) — you can run the analysis'},
     'ag_run_btn': {'tr': '🔬 Karşılaştırma Analizini Çalıştır', 'en': '🔬 Run Comparison Analysis'},
     'ag_comparing': {'tr': 'çift karşılaştırılıyor...', 'en': 'pairs being compared...'},
     'ag_processing_error': {'tr': 'işlenirken hata', 'en': 'error while processing'},

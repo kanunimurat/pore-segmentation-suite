@@ -1,0 +1,458 @@
+"""
+i18n.py — Internationalization (TR / EN) for Pore Segmentation Suite
+====================================================================
+
+Provides:
+- TRANSLATIONS dictionary (key -> {tr: ..., en: ...})
+- T(key) — returns localized string based on st.session_state.lang
+- render_language_selector() — sidebar flag buttons (🇹🇷 / 🇬🇧)
+- DEFAULT_LANG = 'en' (so screenshots are English by default)
+
+Usage in main app:
+    from modules.i18n import T, render_language_selector, init_language
+    init_language()              # at top of main()
+    render_language_selector()   # inside sidebar (top)
+    st.title(T('app_title'))
+    st.button(T('btn_compute_palette'))
+"""
+
+import streamlit as st
+
+DEFAULT_LANG = 'en'
+
+# ============================================================================
+# TRANSLATIONS DICTIONARY
+# Add new keys as needed. Format: 'key': {'tr': 'TR string', 'en': 'EN string'}
+# Keys are namespaced by section for readability.
+# ============================================================================
+
+TRANSLATIONS = {
+    # ---------------------------------------------------------------- App meta
+    'app_title':            {'tr': '🪨 Gözenek ve Renk Tespit Yazılımı',
+                             'en': '🪨 Pore Segmentation Suite'},
+    'app_caption':          {'tr': 'Travertenler için interaktif segmentasyon — DoG / MSER / Sauvola / Color-Distance + per-stone renk paleti',
+                             'en': 'Interactive segmentation for travertines — DoG / MSER / Sauvola / Color-Distance + per-stone color palettes'},
+    'language':             {'tr': 'Dil', 'en': 'Language'},
+
+    # ---------------------------------------------------------------- Mode selector
+    'mode_pore':            {'tr': '🔬 Gözenek Bölütleme',
+                             'en': '🔬 Pore Segmentation'},
+    'mode_palette':         {'tr': '🎨 Renk Paleti',
+                             'en': '🎨 Color Palette'},
+    'mode_aging':           {'tr': '⏱️ Yaşlandırma Analizi',
+                             'en': '⏱️ Aging Analysis'},
+    'mode_collage':         {'tr': '🖼️ Kolaj Oluşturucu',
+                             'en': '🖼️ Collage Builder'},
+    'select_mode':          {'tr': 'Çalışma Modu',
+                             'en': 'Work Mode'},
+
+    # ---------------------------------------------------------------- Image upload
+    'analyze_start':        {'tr': '📊 Analize Başla',
+                             'en': '📊 Start Analysis'},
+    'upload_image':         {'tr': '📂 Görüntü Yükle',
+                             'en': '📂 Upload Image'},
+    'source':               {'tr': 'Kaynak',
+                             'en': 'Source'},
+    'src_upload_file':      {'tr': '📤 Dosya yükle',
+                             'en': '📤 Upload file'},
+    'src_from_folder':      {'tr': '📁 Klasörden seç',
+                             'en': '📁 Pick from folder'},
+    'image_input_label':    {'tr': 'Travertin yüzey görüntüsü',
+                             'en': 'Travertine surface image'},
+    'folder_path':          {'tr': 'Klasör yolu',
+                             'en': 'Folder path'},
+    'pick_image':           {'tr': 'Görüntü seç',
+                             'en': 'Pick image'},
+    'load_btn':             {'tr': '🔄 Yükle',
+                             'en': '🔄 Load'},
+    'no_images_in_folder':  {'tr': 'Klasörde görüntü yok.',
+                             'en': 'No images in folder.'},
+
+    # ---------------------------------------------------------------- Stone type + palette
+    'stone_palette':        {'tr': '🪨 Taş Tipi & Renk Paleti',
+                             'en': '🪨 Stone Type & Color Palette'},
+    'stone_code':           {'tr': 'Taş kodu',
+                             'en': 'Stone code'},
+    'compute_palette':      {'tr': '🔄 Bu görüntüden K-means palet hesapla',
+                             'en': '🔄 Compute K-means palette from this image'},
+    'computing':            {'tr': 'Hesaplanıyor...',
+                             'en': 'Computing...'},
+    'palette_updated':      {'tr': 'Palet güncellendi.',
+                             'en': 'Palette updated.'},
+    'colors_from_image':    {'tr': '**Görüntüden eklenen renkler:**',
+                             'en': '**Colors added from image:**'},
+
+    # ---------------------------------------------------------------- Algorithm families
+    'algo_family':          {'tr': 'Algoritma Ailesi',
+                             'en': 'Algorithm Family'},
+    'family_classical':     {'tr': '🔵 Klasik Eşikleme',
+                             'en': '🔵 Classical Thresholding'},
+    'family_blob':          {'tr': '🟢 Blob / Bölge',
+                             'en': '🟢 Blob / Region'},
+    'family_color':         {'tr': '🟣 Renk / Kümeleme',
+                             'en': '🟣 Color / Clustering'},
+    'family_hybrid':        {'tr': '🤝 Hibrit',
+                             'en': '🤝 Hybrid'},
+    'family_modern':        {'tr': '🚀 Modern Derin Öğrenme',
+                             'en': '🚀 Modern Deep Learning'},
+    'algorithm':            {'tr': 'Algoritma',
+                             'en': 'Algorithm'},
+
+    # ---------------------------------------------------------------- Common params
+    'multiscale_3':         {'tr': 'Multi-scale (3 ölçek union)',
+                             'en': 'Multi-scale (3-octave union)'},
+    'sigma_small':          {'tr': 'σ₁ (küçük ölçek)',
+                             'en': 'σ₁ (small scale)'},
+    'sigma_large':          {'tr': 'σ₂ (büyük ölçek)',
+                             'en': 'σ₂ (large scale)'},
+    'percentile_low_more':  {'tr': 'Percentile (düşük = daha fazla pore)',
+                             'en': 'Percentile (lower = more pores)'},
+    'percentile_high_less': {'tr': 'Yanıt percentile (yüksek=daha az pore)',
+                             'en': 'Response percentile (higher = fewer pores)'},
+    'delta_stability':      {'tr': 'Delta (kararlılık)',
+                             'en': 'Delta (stability)'},
+    'color_space':          {'tr': 'Renk uzayı',
+                             'en': 'Color space'},
+    'n_classes':            {'tr': 'Sınıf sayısı',
+                             'en': 'Number of classes'},
+    'darkest_classes_pore': {'tr': 'En koyu kaç sınıfı pore say',
+                             'en': 'How many darkest classes count as pore'},
+    'auto_thresh_caption':  {'tr': '**Otomatik Eşik** (sıfır parametre)',
+                             'en': '**Auto Threshold** (zero parameter)'},
+    'method':               {'tr': 'Yöntem',
+                             'en': 'Method'},
+    'frangi_caption':       {'tr': '**Frangi Vesselness** (uzamış/bağlantılı yapılar)',
+                             'en': '**Frangi Vesselness** (elongated / connected structures)'},
+    'sigma_step':           {'tr': 'σ adım',
+                             'en': 'σ step'},
+    'dark_ridges':           {'tr': 'Karanlık ridges',
+                              'en': 'Dark ridges'},
+
+    # ---------------------------------------------------------------- Filters
+    'filters_section':      {'tr': '🚫 Yanlış-Pozitif Filtreleri',
+                             'en': '🚫 False-Positive Filters'},
+    'min_area_px':          {'tr': 'Min. alan (piksel)',
+                             'en': 'Min. area (pixels)'},
+    'max_eccentricity':     {'tr': 'Maks. eccentricity',
+                             'en': 'Max. eccentricity'},
+    'min_solidity':         {'tr': 'Min. solidity',
+                             'en': 'Min. solidity'},
+    'min_texture_std':      {'tr': 'Min. doku std',
+                             'en': 'Min. texture std'},
+    'must_be_dark':         {'tr': 'Karanlık olmalı (median altı)',
+                             'en': 'Must be dark (below median)'},
+
+    # ---------------------------------------------------------------- Overlay
+    'overlay_section':      {'tr': '🎯 Overlay Görselleştirme',
+                             'en': '🎯 Overlay Visualization'},
+    'overlay_style':        {'tr': 'Stil',
+                             'en': 'Style'},
+    'style_fill':           {'tr': 'Dolgu (saydam)',
+                             'en': 'Fill (transparent)'},
+    'style_outline':        {'tr': 'Sadece sınırlar',
+                             'en': 'Outline only'},
+    'overlay_color':        {'tr': 'Overlay rengi',
+                             'en': 'Overlay color'},
+    'color_auto':           {'tr': 'Otomatik (kontrasta göre)',
+                             'en': 'Auto (contrast-based)'},
+    'color_custom':         {'tr': 'Özel (hex)',
+                             'en': 'Custom (hex)'},
+    'alpha':                {'tr': 'Şeffaflık (alpha)',
+                             'en': 'Transparency (alpha)'},
+    'outline_thickness':    {'tr': 'Sınır kalınlığı (px)',
+                             'en': 'Outline thickness (px)'},
+
+    # ---------------------------------------------------------------- Results
+    'results':              {'tr': '📊 Sonuçlar',
+                             'en': '📊 Results'},
+    'porosity_pct':         {'tr': 'Gözeneklilik (%)',
+                             'en': 'Porosity (%)'},
+    'pore_count':           {'tr': 'Gözenek sayısı',
+                             'en': 'Pore count'},
+    'processing_time':      {'tr': 'İşlem süresi (s)',
+                             'en': 'Processing time (s)'},
+    'save_params':          {'tr': '💾 Bu parametreleri kaydet',
+                             'en': '💾 Save these parameters'},
+
+    # ---------------------------------------------------------------- Color palette mode
+    'palette_mode_title':   {'tr': '🎨 Renk Paleti Çıkarma',
+                             'en': '🎨 Color Palette Extraction'},
+    'clustering_algo':      {'tr': 'Kümeleme algoritması',
+                             'en': 'Clustering algorithm'},
+    'n_colors':             {'tr': 'Renk sayısı',
+                             'en': 'Number of colors'},
+    'compute_palette_btn':  {'tr': '🎨 Paleti hesapla',
+                             'en': '🎨 Compute palette'},
+    'save_palette':         {'tr': '💾 Paleti JSON olarak kaydet',
+                             'en': '💾 Save palette as JSON'},
+
+    # ---------------------------------------------------------------- Aging analysis mode
+    'aging_mode_title':     {'tr': '⏱️ Yaşlandırma Analizi',
+                             'en': '⏱️ Aging Analysis'},
+    'upload_pre':           {'tr': 'Öncesi (pre) görüntüleri',
+                             'en': 'Pre (before) images'},
+    'upload_post':          {'tr': 'Sonrası (post) görüntüleri',
+                             'en': 'Post (after) images'},
+    'pairing_strategy':     {'tr': 'Eşleştirme stratejisi',
+                             'en': 'Pairing strategy'},
+    'pair_alphabetic':      {'tr': 'Alfabetik (dosya adına göre)',
+                             'en': 'Alphabetic (by filename)'},
+    'pair_upload_order':    {'tr': 'Yükleme sırası',
+                             'en': 'Upload order'},
+    'pair_manual':          {'tr': 'Manuel',
+                             'en': 'Manual'},
+    'delta_e_formula':      {'tr': 'ΔE formülü',
+                             'en': 'ΔE formula'},
+    'compute_aging':        {'tr': '🧪 Hesapla',
+                             'en': '🧪 Compute'},
+    'paper_ready_output':   {'tr': '📄 Makale-hazır çıktı',
+                             'en': '📄 Paper-ready output'},
+
+    # ---------------------------------------------------------------- Collage builder
+    'collage_mode_title':   {'tr': '🖼️ Kolaj Oluşturucu',
+                             'en': '🖼️ Collage Builder'},
+    'collage_mode':         {'tr': 'Mod',
+                             'en': 'Mode'},
+    'mode_manual':          {'tr': '✏️ Manuel',
+                             'en': '✏️ Manual'},
+    'mode_quick':           {'tr': '⚡ Quick (yaşlandırmadan)',
+                             'en': '⚡ Quick (from aging)'},
+    'mode_template':        {'tr': '📋 Şablon',
+                             'en': '📋 Template'},
+    'rows':                 {'tr': 'Satır',
+                             'en': 'Rows'},
+    'cols':                 {'tr': 'Sütun',
+                             'en': 'Columns'},
+    'cell_width_px':        {'tr': 'Hücre genişliği (px)',
+                             'en': 'Cell width (px)'},
+    'font_size_mode':       {'tr': 'Font boyutu',
+                             'en': 'Font size'},
+    'font_auto':            {'tr': 'Otomatik',
+                             'en': 'Auto'},
+    'font_small':           {'tr': 'Küçük',
+                             'en': 'Small'},
+    'font_medium':          {'tr': 'Orta',
+                             'en': 'Medium'},
+    'font_large':           {'tr': 'Büyük',
+                             'en': 'Large'},
+    'font_custom':          {'tr': 'Özel',
+                             'en': 'Custom'},
+    'label_position':       {'tr': 'Etiket pozisyonu',
+                             'en': 'Label position'},
+    'export_format':        {'tr': 'Çıktı formatı',
+                             'en': 'Export format'},
+    'render_collage':       {'tr': '🎨 Kolajı oluştur',
+                             'en': '🎨 Render collage'},
+    'download_collage':     {'tr': '⬇️ Kolajı indir',
+                             'en': '⬇️ Download collage'},
+
+    # ---------------------------------------------------------------- Generic messages
+    'no_image_loaded':      {'tr': '⚠️ Önce bir görüntü yükle.',
+                             'en': '⚠️ Upload an image first.'},
+    'computing_overlay':    {'tr': 'Overlay hesaplanıyor...',
+                             'en': 'Computing overlay...'},
+    'parameters_saved':     {'tr': '✓ Parametreler kaydedildi.',
+                             'en': '✓ Parameters saved.'},
+    'error_generic':        {'tr': 'Hata oluştu',
+                             'en': 'An error occurred'},
+
+    # ---- Phase 4 additions ----
+    'algorithm_section': {'tr': '##### 🔧 Algoritma', 'en': '##### 🔧 Algorithm'},
+    'algorithm_method': {'tr': 'Yöntem', 'en': 'Method'},
+    'help_algo_family': {'tr': 'Yaklaşım ailesi: klasik eşikleme, blob tespiti, renk-tabanlı, hibrit veya modern derin öğrenme.', 'en': 'Approach family: classical thresholding, blob detection, color-based, hybrid, or modern deep learning.'},
+    'help_algo_specific': {'tr': 'Seçtiğin yöntem ailesindeki spesifik algoritma. Aşağıdaki sliderlar bu algoritmaya özgüdür.', 'en': 'Specific algorithm within the selected family. The sliders below are specific to this algorithm.'},
+    'family_classical_full': {'tr': '🔵 Klasik Eşikleme', 'en': '🔵 Classical Thresholding'},
+    'family_blob_full': {'tr': '🟢 Blob/Region Detection', 'en': '🟢 Blob/Region Detection'},
+    'family_color_full': {'tr': '🟣 Renk/Clustering Tabanlı', 'en': '🟣 Color/Clustering-Based'},
+    'family_hybrid_full': {'tr': '🤝 Hibrit (Klasik + Renk)', 'en': '🤝 Hybrid (Classical + Color)'},
+    'family_modern_full': {'tr': '🚀 Modern Deep Learning', 'en': '🚀 Modern Deep Learning'},
+    'p_dog': {'tr': '**DoG Parametreleri**', 'en': '**DoG Parameters**'},
+    'p_mser': {'tr': '**MSER Parametreleri**', 'en': '**MSER Parameters**'},
+    'p_sauvola': {'tr': '**Sauvola Parametreleri**', 'en': '**Sauvola Parameters**'},
+    'p_color': {'tr': '**Renk Mesafesi Parametreleri**', 'en': '**Color Distance Parameters**'},
+    'p_multiotsu': {'tr': '**Multi-Otsu Parametreleri** (otomatik, parametresiz)', 'en': '**Multi-Otsu Parameters** (automatic, parameter-free)'},
+    'p_bottomhat': {'tr': '**Bottom-Hat Morfoloji Parametreleri**', 'en': '**Bottom-Hat Morphology Parameters**'},
+    'p_watershed': {'tr': '**Watershed Parametreleri** (yapışık pore\'ları ayırır)', 'en': '**Watershed Parameters** (separates touching pores)'},
+    'window_size': {'tr': 'Pencere boyutu', 'en': 'Window size'},
+    'analysis_params': {'tr': '##### ⚙️ Analiz Parametreleri', 'en': '##### ⚙️ Analysis Parameters'},
+    'banner_suffix': {'tr': 'soldan ayarları yap, sonuçları burada gör.', 'en': 'configure settings on the left, see results here.'},
+    'load_image_left': {'tr': '👈 Soldan görüntü yükle.', 'en': '👈 Upload an image from the left.'},
+    'mode_pore_banner': {'tr': '🔬 Gözenek Analizi Modu', 'en': '🔬 Pore Segmentation Mode'},
+    'mode_palette_banner': {'tr': '🎨 Renk Paleti Modu', 'en': '🎨 Color Palette Mode'},
+    'mode_aging_banner': {'tr': '🔄 Yaşlandırma Analizi Modu', 'en': '🔄 Aging Analysis Mode'},
+    'footer_text': {'tr': 'Gözenek ve Renk Tespit Yazılımı v1.0 — 2026  |  Murat SERT — AKÜ', 'en': 'Pore Segmentation Suite v1.0.0 — 2026  |  Murat SERT — Afyon Kocatepe University'},
+    'dominant_colors_label': {'tr': 'dominant renk', 'en': 'dominant colors'},
+
+    # ---- Phase 6 additions (Aging Analysis i18n) ----
+    'aging_sidebar_title': {'tr': '🔄  **Aging Analizi (Pre/Post)**', 'en': '🔄  **Aging Analysis (Pre/Post)**'},
+    'aging_sidebar_descr': {'tr': 'Yaşlandırma deneyi öncesi/sonrası yüzey renk değişimini ölçer (TS EN 15886 + CIEDE2000)', 'en': 'Measures surface color change before/after aging treatment (TS EN 15886 + CIEDE2000)'},
+    'aging_compare_mode': {'tr': 'Karşılaştırma Modu', 'en': 'Comparison Mode'},
+    'aging_mode_single': {'tr': '🪞 Tek-çift (1 pre + 1 post)', 'en': '🪞 Single pair (1 pre + 1 post)'},
+    'aging_mode_multi': {'tr': '🔢 Çoklu numune (N pre + N post)', 'en': '🔢 Multi-specimen (N pre + N post)'},
+    'pre_images_section': {'tr': '##### 📤 Deney Öncesi Görüntüleri', 'en': '##### 📤 Pre-treatment Images'},
+    'post_images_section': {'tr': '##### 📤 Deney Sonrası Görüntüleri', 'en': '##### 📤 Post-treatment Images'},
+    'pairs_ready_template': {'tr': '✓ {npre} pre + {npost} post = {npairs} eşleştirilecek çift', 'en': '✓ {npre} pre + {npost} post = {npairs} pairs to compare'},
+    'single_mode_warn': {'tr': 'Tek-çift modunda 1\'er görüntü yükle. Daha fazlası varsa Çoklu moda geç.', 'en': 'Upload one image each in Single-pair mode. Use Multi-specimen mode for more.'},
+    'aging_results_title': {'tr': 'Yaslandirma Karsilastirma Sonuclari (Pre/Post)', 'en': 'Aging Comparison Results (Pre/Post)'},
+    'aging_n_samples': {'tr': '{n} numune | {method}', 'en': '{n} samples | {method}'},
+    'general_summary': {'tr': '##### Genel Ozet', 'en': '##### Summary'},
+    'metric_mean_dE': {'tr': 'Ortalama dE', 'en': 'Mean ΔE'},
+    'metric_minmax_dE': {'tr': 'Min/Max dE', 'en': 'Min/Max ΔE'},
+    'metric_mean_dL': {'tr': 'Ortalama dL*', 'en': 'Mean ΔL*'},
+    'metric_cv_dE': {'tr': 'CV (dE)', 'en': 'CV (ΔE)'},
+    'per_sample_table': {'tr': '##### Numune Karsilastirma Tablosu', 'en': '##### Per-sample Comparison Table'},
+    'col_sample': {'tr': 'Numune', 'en': 'Sample'},
+    'col_class': {'tr': 'Sinif', 'en': 'Class'},
+    'color_compare_section': {'tr': '##### Renk Karsilastirma (Pre / Post)', 'en': '##### Color Comparison (Pre / Post)'},
+    'bar_chart_section': {'tr': '##### Numune x dE Bar Chart', 'en': '##### Per-sample ΔE Bar Chart'},
+    'bar_chart_caption': {'tr': 'Dikey kesikli cizgiler perceptual esiklerdir: 1=just noticeable, 3.5=barely visible, 5=clear, 10=marked', 'en': 'Dashed vertical lines mark perceptual thresholds: 1=just noticeable, 3.5=barely visible, 5=clear, 10=marked'},
+    'stat_analysis_section': {'tr': '##### Istatistiksel Analiz (Paired)', 'en': '##### Statistical Analysis (Paired)'},
+    'stat_test_label': {'tr': 'Test', 'en': 'Test'},
+    'stat_pvalue': {'tr': 'p-deger', 'en': 'p-value'},
+    'stat_significant': {'tr': 'Anlamli', 'en': 'Significant'},
+    'stat_nonsignificant': {'tr': 'Anlamsiz', 'en': 'Not significant'},
+    'stat_cohen_d': {'tr': 'Cohen d', 'en': 'Cohen\'s d'},
+    'stat_ci': {'tr': '95% CI', 'en': '95% CI'},
+    'stat_test_prefix': {'tr': '**Test:**', 'en': '**Test:**'},
+    'stat_normal_yes': {'tr': 'Normal kabul', 'en': 'Normal accepted'},
+    'stat_normal_no': {'tr': 'Normal degil (non-param)', 'en': 'Non-normal (non-parametric)'},
+    'stat_shapiro_prefix': {'tr': '**Shapiro-Wilk p:**', 'en': '**Shapiro-Wilk p:**'},
+
+    # ---- Phase 7 additions (Pairing strategy + Downloads + classification map) ----
+    'pair_strategy_section': {'tr': '##### 🔗 Eşleştirme Stratejisi', 'en': '##### 🔗 Pairing Strategy'},
+    'pair_strategy_label': {'tr': 'Strateji', 'en': 'Strategy'},
+    'pair_opt_alpha': {'tr': '🔤 Otomatik — alfabetik (dosya adına göre)', 'en': '🔤 Auto — alphabetic (by filename)'},
+    'pair_opt_order': {'tr': '🔢 Otomatik — yükleme sırası (1.pre ↔ 1.post)', 'en': '🔢 Auto — upload order (1.pre ↔ 1.post)'},
+    'pair_opt_manual': {'tr': '✋ Manuel eşleştirme (tablo)', 'en': '✋ Manual pairing (table)'},
+    'pair_manual_caption': {'tr': 'Her pre-test için karşılık gelen post-test\'i seç:', 'en': 'Select the matching post-test for each pre-test:'},
+    'pair_manual_match_prefix': {'tr': 'eşleşir', 'en': 'matches'},
+    'dE_metric_label': {'tr': 'ΔE metriği', 'en': 'ΔE metric'},
+    'dE_2000_opt': {'tr': 'ΔE-2000 (modern, önerilen)', 'en': 'ΔE-2000 (modern, recommended)'},
+    'dE_94_opt': {'tr': 'ΔE-94 (CIE 1994)', 'en': 'ΔE-94 (CIE 1994)'},
+    'dE_76_opt': {'tr': 'ΔE-76 (CIE 1976, klasik)', 'en': 'ΔE-76 (CIE 1976, classical)'},
+    'analysis_depth_label': {'tr': 'Analiz Derinliği', 'en': 'Analysis Depth'},
+    'depth_standard': {'tr': '📊 Standart (mean color + ΔE + istatistik)', 'en': '📊 Standard (mean color + ΔE + statistics)'},
+    'depth_detailed': {'tr': '🔬 Detaylı (+ uniformity karşılaştırması)', 'en': '🔬 Detailed (+ uniformity comparison)'},
+    'pixel_sample_size': {'tr': 'Pixel örnekleme boyutu', 'en': 'Pixel sample size'},
+    'estimated_time_template': {'tr': '⏱️ Tahmini süre: ~{secs:.0f}s ({n} numune)', 'en': '⏱️ Estimated time: ~{secs:.0f}s ({n} samples)'},
+    'download_options': {'tr': '##### İndirme Seçenekleri', 'en': '##### Download Options'},
+    'btn_per_pair_csv': {'tr': 'Per-pair CSV', 'en': 'Per-pair CSV'},
+    'btn_full_json': {'tr': 'Full JSON', 'en': 'Full JSON'},
+    'btn_md_report': {'tr': 'Markdown rapor', 'en': 'Markdown report'},
+    'btn_txt_summary': {'tr': 'TXT özet', 'en': 'TXT summary'},
+    'label_tr_discussion': {'tr': 'TR (Tartışma için):', 'en': 'TR (for Discussion):'},
+    'label_en_paper_ready': {'tr': 'EN (Paper-ready):', 'en': 'EN (Paper-ready):'},
+
+    # ---- Phase 8 additions (Pore Segmentation result + overlay presets) ----
+    'caption_original': {'tr': 'Orijinal', 'en': 'Original'},
+    'caption_segmentation': {'tr': 'Segmentasyon', 'en': 'Segmentation'},
+    'metric_porosity': {'tr': 'Görüntü Porozitesi', 'en': 'Image Porosity'},
+    'metric_pore_count': {'tr': 'Pore Sayısı', 'en': 'Pore Count'},
+    'metric_mean_area': {'tr': 'Ort. Alan (mm²)', 'en': 'Mean Area (mm²)'},
+    'metric_mean_circ': {'tr': 'Ort. Dairesellik', 'en': 'Mean Circularity'},
+    'reference_compare': {'tr': '🧪 Deneysel referans karşılaştırması (opsiyonel)', 'en': '🧪 Experimental reference comparison (optional)'},
+    'segmentation_error': {'tr': 'Segmentasyon hatası', 'en': 'Segmentation error'},
+    'overlay_style_label': {'tr': 'Overlay stili', 'en': 'Overlay style'},
+    'fill_color_label': {'tr': 'Dolgu rengi', 'en': 'Fill color'},
+    'color_picker': {'tr': 'Renk seç', 'en': 'Pick color'},
+    'preset_green_light': {'tr': '🟢 Yeşil (açık taş)', 'en': '🟢 Green (light stone)'},
+    'preset_yellow': {'tr': '🟡 Sarı parlak (universal)', 'en': '🟡 Bright yellow (universal)'},
+    'preset_red': {'tr': '🔴 Kırmızı (alarm)', 'en': '🔴 Red (alarm)'},
+    'preset_pink': {'tr': '🌸 Pembe (koyu taş)', 'en': '🌸 Pink (dark stone)'},
+    'preset_magenta': {'tr': '🟣 Magenta (koyu taş)', 'en': '🟣 Magenta (dark stone)'},
+    'preset_blue': {'tr': '🔵 Mavi (kontrast)', 'en': '🔵 Blue (contrast)'},
+    'preset_cyan': {'tr': '🟦 Cyan/Turkuaz', 'en': '🟦 Cyan/Turquoise'},
+    'preset_white': {'tr': '⚪ Beyaz (çok koyu taş)', 'en': '⚪ White (very dark stone)'},
+    'preset_black': {'tr': '⚫ Siyah (çok açık taş)', 'en': '⚫ Black (very light stone)'},
+    'preset_orange': {'tr': '🟠 Turuncu', 'en': '🟠 Orange'},
+    'preset_auto': {'tr': '🤖 Auto (görüntüye göre)', 'en': '🤖 Auto (image-based)'},
+    'preset_custom': {'tr': '🎨 Custom (kendin seç)', 'en': '🎨 Custom (pick your own)'},
+    'auto_note_magenta': {'tr': '→ Magenta (açık taş tespit edildi)', 'en': '→ Magenta (light stone detected)'},
+    'auto_note_green': {'tr': '→ Yeşil (orta tonda)', 'en': '→ Green (medium tone)'},
+    'auto_note_yellow': {'tr': '→ Sarı (koyu taş tespit edildi)', 'en': '→ Yellow (dark stone detected)'},
+    'auto_brightness_label': {'tr': '**Auto**: parlaklık', 'en': '**Auto**: brightness'},
+    'role_pore': {'tr': '🕳️ pore', 'en': '🕳️ pore'},
+    'role_matrix': {'tr': '☁️ matriks', 'en': '☁️ matrix'},
+}
+
+
+# ============================================================================
+# HELPER FUNCTIONS
+# ============================================================================
+
+def init_language():
+    """Initialize language in session state. Call at top of app."""
+    if 'lang' not in st.session_state:
+        st.session_state.lang = DEFAULT_LANG
+
+
+def T(key: str, fallback: str | None = None) -> str:
+    """
+    Translate a key to the current language.
+
+    Args:
+        key: Translation key (must exist in TRANSLATIONS dict)
+        fallback: If key not found, use this (default: return key itself)
+
+    Returns:
+        Localized string
+    """
+    if 'lang' not in st.session_state:
+        st.session_state.lang = DEFAULT_LANG
+    lang = st.session_state.lang
+    entry = TRANSLATIONS.get(key)
+    if entry is None:
+        return fallback if fallback is not None else key
+    return entry.get(lang, entry.get(DEFAULT_LANG, key))
+
+
+def render_language_selector(location='sidebar', label_visible: bool = False):
+    """
+    Render TR / EN flag selector.
+
+    Args:
+        location: 'sidebar' (default) or 'main' — where to place the selector
+        label_visible: If True, show "Language / Dil" label above buttons
+    """
+    container = st.sidebar if location == 'sidebar' else st
+    if label_visible:
+        container.caption(T('language') + ' / Dil')
+
+    col1, col2 = container.columns(2)
+
+    current = st.session_state.get('lang', DEFAULT_LANG)
+
+    # Use button type to indicate active language
+    tr_type = 'primary' if current == 'tr' else 'secondary'
+    en_type = 'primary' if current == 'en' else 'secondary'
+
+    if col1.button('🇹🇷 TR', key='lang_btn_tr', type=tr_type, use_container_width=True):
+        st.session_state.lang = 'tr'
+        st.rerun()
+    if col2.button('🇬🇧 EN', key='lang_btn_en', type=en_type, use_container_width=True):
+        st.session_state.lang = 'en'
+        st.rerun()
+
+
+def get_current_language() -> str:
+    """Returns current language code ('tr' or 'en')."""
+    return st.session_state.get('lang', DEFAULT_LANG)
+
+# ============================================================================
+# CLASSIFICATION LABEL TRANSLATION (Aging Analysis)
+# ============================================================================
+
+CLASSIFICATION_TR_TO_EN = {
+    'gorsel olarak fark edilmez (perceptually identical)': 'perceptually identical (not perceived)',
+    'sadece egitimli goz fark eder (just noticeable)': 'just noticeable (trained eye only)',
+    'egitimsiz goz zar zor gorur (barely visible)': 'barely visible (untrained eye)',
+    'acik gorsel fark (clear difference)': 'clear difference',
+    'belirgin gorsel hasar (marked damage)': 'marked visual damage',
+}
+
+def translate_classification(label: str) -> str:
+    """Translate aging analysis classification string from internal TR to current language."""
+    if st.session_state.get('lang', 'en') == 'tr':
+        return label
+    # EN mode: lookup in map, fallback to original
+    return CLASSIFICATION_TR_TO_EN.get(label, label)
