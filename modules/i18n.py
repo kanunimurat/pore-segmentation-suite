@@ -280,7 +280,7 @@ TRANSLATIONS = {
     'mode_pore_banner': {'tr': '🔬 Gözenek Analizi Modu', 'en': '🔬 Pore Segmentation Mode'},
     'mode_palette_banner': {'tr': '🎨 Renk Paleti Modu', 'en': '🎨 Color Palette Mode'},
     'mode_aging_banner': {'tr': '🔄 Yaşlandırma Analizi Modu', 'en': '🔄 Aging Analysis Mode'},
-    'footer_text': {'tr': 'Gözenek ve Renk Tespit Yazılımı v1.2 — 2026  |  Murat SERT — AKÜ', 'en': 'Pore Segmentation Suite v1.2.0 — 2026  |  Murat SERT — Afyon Kocatepe University'},
+    'footer_text': {'tr': 'Gözenek ve Renk Tespit Aracı v1.2.1 — 2026  |  Dr. Murat SERT — Afyon Kocatepe Üniversitesi', 'en': 'Pore and Color Segmentation Suite v1.2.1 — 2026  |  Murat SERT (Ph.D) — Afyon Kocatepe University'},
     'dominant_colors_label': {'tr': 'dominant renk', 'en': 'dominant colors'},
 
     # ---- Phase 6 additions (Aging Analysis i18n) ----
