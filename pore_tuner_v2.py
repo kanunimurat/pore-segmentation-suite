@@ -286,14 +286,15 @@ with _hc1:
     st.caption(T('app_caption'))
 with _hc2:
     st.markdown(
-        """<div style="text-align:right; padding-top:22px; line-height:2.1;">
+        """<div style="text-align:right; padding-top:22px;">
   <span style="background:#FFF1E6; color:#C75B12; border:1px solid #F2C9A6; border-radius:6px; padding:3px 10px; font-size:.85rem; font-weight:700; white-space:nowrap;">v1.2.1</span>
   <span style="background:#FFF1E6; color:#C75B12; border:1px solid #F2C9A6; border-radius:6px; padding:3px 10px; font-size:.85rem; font-weight:700; white-space:nowrap;">MIT</span>
-  <a href="https://doi.org/10.5281/zenodo.20514039" target="_blank" title="10.5281/zenodo.20514039" style="color:#E8833A; font-weight:700; font-size:.85rem; text-decoration:none; border:1px solid #F2C9A6; border-radius:6px; padding:3px 10px; white-space:nowrap;">Zenodo DOI &#8599;</a>
-  <a href="https://github.com/kanunimurat/pore-segmentation-suite" target="_blank" style="color:#E8833A; font-weight:700; font-size:.85rem; text-decoration:none; border:1px solid #F2C9A6; border-radius:6px; padding:3px 10px; white-space:nowrap;">GitHub &#8599;</a>
-  <div style="color:#9aa0a6; font-size:.8rem; margin-top:8px;">__STAT__</div>
+  <div style="color:#9aa0a6; font-size:.8rem; margin-top:6px;">__STAT__</div>
 </div>""".replace('__STAT__', _hdr_stat),
         unsafe_allow_html=True)
+    _lc1, _lc2 = st.columns(2)
+    _lc1.link_button('Zenodo DOI ↗', 'https://doi.org/10.5281/zenodo.20514039', use_container_width=True)
+    _lc2.link_button('GitHub ↗', 'https://github.com/kanunimurat/pore-segmentation-suite', use_container_width=True)
 
 
 # ============================================================
