@@ -10,6 +10,16 @@ License: MIT  |  Developer: Murat SERT, AKU
 
 ---
 
+## 🌐 Try it online (no installation)
+
+Use the app directly in your browser — no Python required:
+
+**https://pore-and-color-segmentation-suite.streamlit.app**
+
+> Hosted on Streamlit Community Cloud (free tier). Very large images (>3000 px) may be slow online — for heavy use, run locally (below).
+
+---
+
 ## ✨ What's new (v1.2)
 
 - **Pore-size distribution chart** (MIP-like, logarithmic axis, D50, imaging-resolution limit)
@@ -29,15 +39,17 @@ License: MIT  |  Developer: Murat SERT, AKU
 
 ### 1️⃣ First-time setup (only once)
 
-**Double-click** `İlk Kurulum.command`.  
+**macOS:** double-click `İlk Kurulum.command`.  
 (Use right-click → Open if needed — macOS may show a security warning.)
+
+**Windows:** skip this step — `Baslat.bat` installs everything automatically on first run.
 
 This installs the required Python libraries automatically (~2-3 minutes).
 
 ### 2️⃣ Run the app
 
-**Double-click** `Başlat.command`.  
-Or double-click the `Gözenek Tespit.app` application.
+**macOS:** double-click `Başlat.command` (or the `Gözenek Tespit.app` application).  
+**Windows:** double-click `Baslat.bat`.
 
 Your browser opens automatically at `http://localhost:8501`.
 
@@ -130,7 +142,8 @@ pip3 install -r requirements-modern.txt
 
 ```
 pore-segmentation-suite/
-├── 🚀 Başlat.command            ← DOUBLE-CLICK TO LAUNCH THE APP
+├── 🚀 Başlat.command            ← DOUBLE-CLICK TO LAUNCH (macOS)
+├── 🚀 Baslat.bat                 ← DOUBLE-CLICK TO LAUNCH (Windows)
 ├── 🛠️ İlk Kurulum.command       ← First-time setup
 ├── 📱 Gözenek Tespit.app/        ← .app bundle (with icon)
 ├── 📄 pore_tuner_v2.py           ← Main Streamlit application

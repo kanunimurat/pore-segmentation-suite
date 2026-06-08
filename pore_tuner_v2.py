@@ -138,6 +138,9 @@ st.set_page_config(
 init_language()
 _inject_global_css()  # Oğuz tarzı görsel kimlik (turuncu vurgu)
 
+# Çalışma ortamı: Streamlit Cloud mu, yerel mi? (Cloud'da repo /mount/src altına bağlanır)
+IS_CLOUD = os.path.abspath(__file__).startswith('/mount/src') or os.environ.get('PSS_CLOUD') == '1'
+
 # Örnek (demo) görüntü yolu ve yükleyici (#3)
 _SAMPLE_IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sample_images', 'sample_travertine.png')
 
@@ -283,8 +286,12 @@ with st.sidebar:
         # ──────────── 1. GÖRÜNTÜ ────────────
         st.markdown(T('upload_image'))
         
-        upload_mode = st.radio(T('source'), [T('src_upload_file'), T('src_from_folder')], 
-                                 horizontal=True, label_visibility='collapsed')
+        if IS_CLOUD:
+            # Online sürümde sunucu diski taranamayacağı için yalnızca dosya yükleme sunulur
+            upload_mode = T('src_upload_file')
+        else:
+            upload_mode = st.radio(T('source'), [T('src_upload_file'), T('src_from_folder')],
+                                     horizontal=True, label_visibility='collapsed')
         
         uploaded_file = None
         if upload_mode == T('src_upload_file'):
@@ -1775,13 +1782,13 @@ elif app_mode == 'pore' and st.session_state.image_rgb is not None:
             _dist = psize.pore_size_distribution(kept_props, pixel_scale_mm=0.091, weight=_wmode)
             if _dist:
                 st.markdown(psize.psd_svg(_dist, title=T('psd_chart_title'), xlabel=T('psd_xlabel'),
-                                          y_inc=T('psd_y_inc'), y_cum=T('psd_y_cum'), pal=_chart_pal()),
+                                          y_inc=T('psd_y_inc'), y_cum=T('psd_y_cum'), pal=_chart_pal(), res_label=T('psd_res_label')),
                             unsafe_allow_html=True)
                 if _dist['d50'] == _dist['d50']:
-                    st.metric(T('psd_d50'), f"{_dist['d50']:.3f} mm")
+                    st.metric(T('psd_d50'), f"{_dist['d50']*1000:.0f} µm")
                 st.info(T('psd_note'))
                 _tbl = pd.DataFrame({
-                    T('psd_xlabel'): [f"{_dist['bin_edges'][i]:.3f}-{_dist['bin_edges'][i+1]:.3f}"
+                    T('psd_xlabel'): [f"{_dist['bin_edges'][i]*1000:.0f}-{_dist['bin_edges'][i+1]*1000:.0f}"
                                       for i in range(len(_dist['inc_pct']))],
                     T('psd_y_inc'): _dist['inc_pct'].round(2),
                     T('psd_y_cum'): _dist['cum_pct'].round(2),
@@ -1828,6 +1835,7 @@ elif app_mode == 'pore' and st.session_state.image_rgb is not None:
                   'DoG':'Blob/region','MSER':'Blob/region','Bottom-Hat':'Blob/region',
                   'Frangi':'Blob/region','GMM':'Clustering'}
         P2_FC = {'Classical':'#1f77b4','Blob/region':'#d62728','Clustering':'#2ca02c'}
+        _FAMTR = {'Classical': T('p2_fam_classical'), 'Blob/region': T('p2_fam_blob'), 'Clustering': T('p2_fam_clustering')}
         p2_all = comp.available_methods()
         p2_sel = st.multiselect(T('p2_methods'), p2_all, default=p2_all, key='p2_methods_sel')
         if st.button(T('p2_run_btn'), key='p2_run', use_container_width=True):
@@ -1860,7 +1868,7 @@ elif app_mode == 'pore' and st.session_state.image_rgb is not None:
                 s4.metric(T('p2_max'),   f'{vmax:.2f} %')
                 # ── inline-SVG horizontal lollipop chart (no matplotlib dependency) ──
                 srt = sorted(rows, key=lambda r: (r['porosity'] != r['porosity'], -(r['porosity'] if r['porosity']==r['porosity'] else 0)))
-                W, rh, gut, padR, top, botax = 640, 30, 104, 60, 30, 34
+                W, rh, gut, padR, top, botax = 640, 30, 104, 60, 30, 58
                 plotW = W - gut - padR
                 scale = (vmax * 1.18) if vmax > 0 else 1.0
                 Hsvg = top + len(srt)*rh + botax
@@ -1889,16 +1897,19 @@ elif app_mode == 'pore' and st.session_state.image_rgb is not None:
                     xv = gut + (t/5)*plotW; lab = scale*(t/5)
                     parts.append(f'<line x1="{xv:.1f}" y1="{axy}" x2="{xv:.1f}" y2="{axy+4}" stroke="{_pal["axis"]}"/>')
                     parts.append(f'<text x="{xv:.1f}" y="{axy+16}" font-size="10" text-anchor="middle" fill="{_pal["muted"]}">{lab:.1f}</text>')
-                # family legend
-                lx = gut + plotW - 150
-                for j, (fam, col) in enumerate(_pal['fam'].items()):
-                    ly = top + 2 + j*15
-                    parts.append(f'<rect x="{lx}" y="{ly-9}" width="11" height="11" fill="{col}" rx="2"/>')
-                    parts.append(f'<text x="{lx+16}" y="{ly}" font-size="10" fill="{_pal["muted"]}">{fam}</text>')
+                # family legend — grafiğin altında, yatay ve ortalanmış
+                _leg = list(_pal['fam'].items())
+                _legy = axy + 38
+                _legw = [11 + 6 + len(fam) * 6.2 + 22 for fam, _ in _leg]
+                _sx = gut + (plotW - sum(_legw)) / 2
+                for (fam, col), w in zip(_leg, _legw):
+                    parts.append(f'<rect x="{_sx:.1f}" y="{_legy-9}" width="11" height="11" fill="{col}" rx="2"/>')
+                    parts.append(f'<text x="{_sx+16:.1f}" y="{_legy}" font-size="10" fill="{_pal["muted"]}">{_FAMTR.get(fam, fam)}</text>')
+                    _sx += w
                 parts.append('</svg>')
                 st.markdown(''.join(parts), unsafe_allow_html=True)
                 st.info(T('p2_interpret').format(spread=f'{spread:.1f}'))
-                p2_df = pd.DataFrame([{T('p2_method_col'): r['method'], T('p2_family'): r['family'],
+                p2_df = pd.DataFrame([{T('p2_method_col'): r['method'], T('p2_family'): _FAMTR.get(r['family'], r['family']),
                                        T('p2_porosity_col'): (round(r['porosity'],3) if r['porosity']==r['porosity'] else None)}
                                       for r in rows])
                 st.dataframe(p2_df, use_container_width=True, hide_index=True)
