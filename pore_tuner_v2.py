@@ -141,6 +141,9 @@ _inject_global_css()  # Oğuz tarzı görsel kimlik (turuncu vurgu)
 # Çalışma ortamı: Streamlit Cloud mu, yerel mi? (Cloud'da repo /mount/src altına bağlanır)
 IS_CLOUD = os.path.abspath(__file__).startswith('/mount/src') or os.environ.get('PSS_CLOUD') == '1'
 
+_CHANGELOG_TR = "#### 🆕 v1.2.1 — Web sürümü + örnek galerisi\n- Tarayıcıdan kullanım (Streamlit Cloud — kurulum gerektirmez)\n- Gömülü gerçek traverten örnekleri: KT · NT · PT · GT (öncesi/sonrası)\n- Yaşlandırma modunda tek tıkla örnek before/after çiftleri\n- 'Gömülü örnek numune' seçici (Gözenek ve Palet modları)\n- Arayüz adı: 'Gözenek ve Renk Tespit Aracı'\n\n#### v1.2.0 — Görsel yenileme + gözenek boyut dağılımı\n- Gözenek boyut dağılımı grafiği (MIP benzeri, logaritmik eksen, D50)\n- Güvenilirlik rozeti (gözeneklilik rejimine göre uyarı: %2 altı / %2–8 / %8 üstü)\n- Tema-duyarlı (açık/koyu) grafikler; tek tık ZIP indirme\n- Sıcak turuncu görsel kimlik, daha okunaklı arayüz\n\n#### v1.1.0 — Çok dillilik + karşılaştırma\n- TR / EN dil seçimi\n- Çoklu-yöntem porozite yayılımı (aynı görüntüde algoritma bağımlılığı)\n- Karşılaştırma-kolaj oluşturucu\n\n#### v1.0.0 — İlk halka açık sürüm\n- 14 segmentasyon algoritması (klasik eşikleme, blob/bölge, renk-clustering, hibrit, modern DL: SAM 2 · CellPose)\n- 4 traverten için ön-yüklü renk paletleri (KT, GT, NT, PT)\n- 5 yanlış-pozitif filtresi; preset kaydet/yükle; K-means palet; piksel renk seçici; CSV/PNG çıktı"
+_CHANGELOG_EN = "#### 🆕 v1.2.1 — Web release + sample gallery\n- Runs in the browser (Streamlit Cloud — no installation)\n- Bundled real travertine samples: KT · NT · PT · GT (before/after)\n- One-click sample before/after pairs in Aging mode\n- 'Built-in sample' picker (Pore & Palette modes)\n- Interface renamed to 'Pore & Color Detection Tool'\n\n#### v1.2.0 — Visual refresh + pore-size distribution\n- Pore-size distribution chart (MIP-like, log axis, D50)\n- Reliability badge (porosity-regime warning: <2% / 2–8% / >8%)\n- Theme-aware (light/dark) charts; one-click ZIP download\n- Warm orange visual identity, more readable interface\n\n#### v1.1.0 — Multilingual + comparison\n- TR / EN language switch\n- Multi-method porosity spread (algorithm dependence on the same image)\n- Comparison-collage builder\n\n#### v1.0.0 — First public release\n- 14 segmentation algorithms (classical, blob/region, color-clustering, hybrid, modern DL: SAM 2 · CellPose)\n- Preloaded color palettes for 4 travertines (KT, GT, NT, PT)\n- 5 false-positive filters; preset save/load; K-means palette; pixel color picker; CSV/PNG export"
+
 # Örnek (demo) görüntü yolu ve yükleyici (#3)
 _SAMPLE_IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sample_images', 'sample_travertine.png')
 
@@ -163,6 +166,81 @@ def _sample_aging_buffers(state):
             with open(fp, 'rb') as fh:
                 out.append(_NamedBytesIO(fh.read(), f'{code}_{state}.jpg'))
     return out
+
+def _render_builtin_sample_picker(key):
+    """Gömülü gerçek traverten örneklerini (KT/NT/PT/GT × öncesi/sonrası) seçtiren açılır menü."""
+    lang = st.session_state.get('lang', 'en')
+    none_lbl = '— ' + T('builtin_none') + ' —'
+    before = 'before' if lang == 'en' else 'öncesi'
+    after = 'after' if lang == 'en' else 'sonrası'
+    names = {'KT': 'Karaman', 'NT': 'Noçe', 'PT': 'Pembe', 'GT': 'Gri'}
+    labels = [none_lbl]
+    mapping = {}
+    for code in ['KT', 'NT', 'PT', 'GT']:
+        for state in ['pre', 'post']:
+            fp = os.path.join(_AGING_DIR, f'{code}_{state}.jpg')
+            if not os.path.exists(fp):
+                continue
+            w = before if state == 'pre' else after
+            lbl = f'{code} — {names.get(code, code)} ({w})'
+            labels.append(lbl)
+            mapping[lbl] = (fp, f'{code}_{state}.jpg')
+    choice = st.selectbox(T('builtin_sample_label'), labels, key=key)
+    guard = key + '_last'
+    if choice != none_lbl and st.session_state.get(guard) != choice:
+        fp, name = mapping[choice]
+        st.session_state.image_rgb = utils.load_image(fp)
+        st.session_state.image_name = name
+        st.session_state[guard] = choice
+        st.rerun()
+
+_CITE_SOFTWARE = 'Sert, M. (2026). Pore Segmentation Suite v1.2: an open-source interactive tool for travertine pore segmentation [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.20514039'
+_CITE_ARTICLE = 'Sert, M. (2026). Beyond a single porosity number: pore-morphometric fingerprints of salt damage in travertines from a calibrated open-source image pipeline. Engineering Perspective. (under review)'
+_CITE_BIBTEX = '@software{sert2026_pss,\n  author    = {Sert, Murat},\n  title     = {Pore Segmentation Suite v1.2: an open-source interactive tool for travertine pore segmentation},\n  year      = {2026},\n  publisher = {Zenodo},\n  doi       = {10.5281/zenodo.20514039},\n  url       = {https://doi.org/10.5281/zenodo.20514039}\n}'
+
+def _render_citations():
+    """Zenodo + makale atıflarını kopyalanabilir st.code bloklarında gösterir."""
+    en = st.session_state.get('lang', 'en') == 'en'
+    st.caption('If you use this tool, please cite:' if en else 'Bu aracı kullanırsanız lütfen atıf verin:')
+    st.markdown('**' + ('Software (Zenodo):' if en else 'Yazılım (Zenodo):') + '**')
+    st.code(_CITE_SOFTWARE, language='text')
+    st.markdown('**' + ('Related article:' if en else 'İlgili makale:') + '**')
+    st.code(_CITE_ARTICLE, language='text')
+    st.markdown('**BibTeX:**')
+    st.code(_CITE_BIBTEX, language='bibtex')
+
+_COUNTER_URL = 'https://api.counterapi.dev/v1/pore-and-color-segmentation-suite/visits/up'
+
+def _render_visit_counter():
+    """Sayfa ziyaretlerini dış serviste tutar; dijital turuncu sayaç olarak gösterir."""
+    if '_visit_count' not in st.session_state:
+        st.session_state['_visit_count'] = None
+        try:
+            import requests
+            r = requests.get(_COUNTER_URL, timeout=4)
+            if r.ok:
+                st.session_state['_visit_count'] = r.json().get('count')
+        except Exception:
+            st.session_state['_visit_count'] = None
+    n = st.session_state.get('_visit_count')
+    if n is None:
+        return
+    en = st.session_state.get('lang', 'en') == 'en'
+    label = 'visitors' if en else 'ziyaretçi'
+    try:
+        sep = ',' if en else '.'
+        n_fmt = format(int(n), ',').replace(',', sep)
+    except Exception:
+        n_fmt = str(n)
+    st.markdown(
+        """<div style="text-align:center; margin:16px 0 6px;">
+          <span style="font-family:'Courier New',ui-monospace,monospace; font-weight:700;
+            font-size:calc(1rem + 3pt); color:#E8833A; letter-spacing:3px;
+            text-shadow:0 0 8px rgba(232,131,58,.55);">&#128065; __N__</span>
+          <span style="font-family:'Courier New',monospace; font-weight:700;
+            font-size:calc(1rem + 3pt); color:#E8833A; letter-spacing:1px;"> __L__</span>
+        </div>""".replace('__N__', n_fmt).replace('__L__', label),
+        unsafe_allow_html=True)
 
 def _load_sample_image():
     if os.path.exists(_SAMPLE_IMG):
@@ -342,6 +420,8 @@ with st.sidebar:
                 if _load_sample_image():
                     st.rerun()
             st.caption(T('demo_caption'))
+
+        _render_builtin_sample_picker('builtin_sample_pore')
 
         st.markdown('---')
         
@@ -594,6 +674,8 @@ with st.sidebar:
         
         # Görüntü Kaynağı
         st.markdown('##### ' + T('cp_source_img'))
+        _render_builtin_sample_picker('builtin_sample_palette')
+
         pal_source = st.radio(T('source'), 
                                 [T('cp_use_loaded'), T('cp_upload_new')],
                                 key='palette_source', horizontal=False)
@@ -1319,6 +1401,21 @@ with st.sidebar:
         st.caption(T('set_feedback'))
     
     # =============================================================
+    # 🆕 VERSİYON GÜNCELLEMELERİ
+    # =============================================================
+    with st.expander(T('changelog_title'), expanded=False):
+        if st.session_state.get('lang', 'en') == 'en':
+            st.markdown(_CHANGELOG_EN)
+        else:
+            st.markdown(_CHANGELOG_TR)
+
+    # =============================================================
+    # 📑 ATIF — kopyalanabilir (görünür)
+    # =============================================================
+    with st.expander(T('cite_title'), expanded=False):
+        _render_citations()
+
+    # =============================================================
     # ℹ️ HAKKINDA — bilim insanları için yardımcı bilgiler
     # =============================================================
     with st.expander(T('about_title'), expanded=False):
@@ -1343,10 +1440,6 @@ with st.sidebar:
         **License:** MIT (recommended) — open for science.
 
         ---
-        **If you use this tool, please cite:**
-        > Sert, M. (2026). *Pore Segmentation Suite v1.2.*
-        > Afyon Kocatepe University. (In preparation)
-
         **Contact:** msert@aku.edu.tr
         """)
         else:
@@ -1370,12 +1463,10 @@ with st.sidebar:
         **Lisans:** MIT (önerilen) — bilim için açık.
 
         ---
-        **Bu aracı kullanırsanız lütfen atıf yapın:**
-        > Sert, M. (2026). *Gözenek ve Renk Tespit Yazılımı v1.2.*
-        > Afyon Kocatepe Üniversitesi. (Hazırlık aşamasında)
-
         **İletişim:** msert@aku.edu.tr
         """)
+        st.markdown('---')
+        _render_citations()
 
 
 # ============================================================
@@ -2557,3 +2648,4 @@ if app_mode == 'collage':
 # ============================================================
 st.divider()
 st.caption(T('footer_text'))
+_render_visit_counter()

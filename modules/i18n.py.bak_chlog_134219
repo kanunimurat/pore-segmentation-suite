@@ -665,8 +665,6 @@ TRANSLATIONS = {
     'set_title': {'tr': '⚙️  **Ayarlar**', 'en': '⚙️  **Settings**'},
     'set_wip': {'tr': '🚧 Bu bölüm geliştirme aşamasındadır.', 'en': '🚧 This section is under development.'},
     'set_feedback': {'tr': 'Özellik önerin mi var? GitHub issue aç veya e-posta gönder.', 'en': 'Have a feature suggestion? Open a GitHub issue or send an email.'},
-    'cite_title': {'tr': '📑  **Atıf — kopyalanabilir**', 'en': '📑  **Cite — copyable**'},
-    'changelog_title': {'tr': '🆕  **Versiyon Güncellemeleri**', 'en': '🆕  **Version Updates**'},
     'about_title': {'tr': 'ℹ️  **Hakkında & Atıf**', 'en': 'ℹ️  **About & Citation**'},
     'pm_select_pore_color': {'tr': '⚠️ Lütfen paletten en az bir pore rengi seç.', 'en': '⚠️ Please select at least one pore color from the palette.'},
     'pm_help_alpha': {'tr': 'Düşük=daha saydam (orijinal daha görünür), Yüksek=daha opak', 'en': 'Low=more transparent (original more visible), High=more opaque'},
