@@ -71,6 +71,9 @@ def _inject_global_css():
     st.markdown(f"""
     <style>
     :root {{ --acc:{acc}; --acc-d:{acc_d}; }}
+    /* Ana panel üst boşluğunu azalt */
+    .block-container, [data-testid="stMainBlockContainer"], [data-testid="stAppViewBlockContainer"] {{
+        padding-top:1.6rem !important; }}
     html, body, .stApp, button, input, textarea, select {{
         font-family:'Inter','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif; }}
     /* Başlıklar: turuncu sol vurgu (Oğuz tarzı bölüm başlığı) */
