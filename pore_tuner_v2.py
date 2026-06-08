@@ -312,7 +312,11 @@ with st.sidebar:
     # ─── LANGUAGE SELECTOR (altta) (🇹🇷 / 🇬🇧) ───────────────
     render_language_selector()
     st.markdown('')  # spacer
-    
+
+    # ─── 📑 ATIF (kopyalanabilir) — marka altı, görünür konum ───
+    with st.expander(T('cite_title'), expanded=False):
+        _render_citations()
+
     # =============================================================
     # 🎯 ÇALIŞMA MODU — Top-Level Mode Selector
     # =============================================================
@@ -1408,12 +1412,6 @@ with st.sidebar:
             st.markdown(_CHANGELOG_EN)
         else:
             st.markdown(_CHANGELOG_TR)
-
-    # =============================================================
-    # 📑 ATIF — kopyalanabilir (görünür)
-    # =============================================================
-    with st.expander(T('cite_title'), expanded=False):
-        _render_citations()
 
     # =============================================================
     # ℹ️ HAKKINDA — bilim insanları için yardımcı bilgiler
