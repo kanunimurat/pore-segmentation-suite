@@ -195,7 +195,10 @@ def _render_builtin_sample_picker(key):
         st.rerun()
 
 _CITE_SOFTWARE = 'Sert, M. (2026). Pore Segmentation Suite v1.2: an open-source interactive tool for travertine pore segmentation [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.20514039'
-_CITE_ARTICLE = 'Sert, M. (2026). Beyond a single porosity number: pore-morphometric fingerprints of salt damage in travertines from a calibrated open-source image pipeline. Engineering Perspective. (under review)'
+_CITE_ART1_TR = 'Sert, M. (2026). Pore Segmentation Suite: an open-source, interactive, multi-method tool for pore segmentation and colour characterization. [Yayın Aşamasında]'
+_CITE_ART1_EN = 'Sert, M. (2026). Pore Segmentation Suite: an open-source, interactive, multi-method tool for pore segmentation and colour characterization. (under review)'
+_CITE_ART2_TR = 'Sert, M. (2026). Beyond a single porosity number: pore-morphometric fingerprints of salt damage in travertines from a calibrated open-source image pipeline. [Yayın Aşamasında]'
+_CITE_ART2_EN = 'Sert, M. (2026). Beyond a single porosity number: pore-morphometric fingerprints of salt damage in travertines from a calibrated open-source image pipeline. (under review)'
 _CITE_BIBTEX = '@software{sert2026_pss,\n  author    = {Sert, Murat},\n  title     = {Pore Segmentation Suite v1.2: an open-source interactive tool for travertine pore segmentation},\n  year      = {2026},\n  publisher = {Zenodo},\n  doi       = {10.5281/zenodo.20514039},\n  url       = {https://doi.org/10.5281/zenodo.20514039}\n}'
 
 def _render_citations():
@@ -204,8 +207,10 @@ def _render_citations():
     st.caption('If you use this tool, please cite:' if en else 'Bu aracı kullanırsanız lütfen atıf verin:')
     st.markdown('**' + ('Software (Zenodo):' if en else 'Yazılım (Zenodo):') + '**')
     st.code(_CITE_SOFTWARE, language='text')
-    st.markdown('**' + ('Related article:' if en else 'İlgili makale:') + '**')
-    st.code(_CITE_ARTICLE, language='text')
+    st.markdown('**' + ('Related article 1:' if en else 'İlgili Makale 1:') + '**')
+    st.code(_CITE_ART1_EN if en else _CITE_ART1_TR, language='text')
+    st.markdown('**' + ('Related article 2:' if en else 'İlgili Makale 2:') + '**')
+    st.code(_CITE_ART2_EN if en else _CITE_ART2_TR, language='text')
     st.markdown('**BibTeX:**')
     st.code(_CITE_BIBTEX, language='bibtex')
 
