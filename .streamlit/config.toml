@@ -1,0 +1,12 @@
+# Pore Segmentation Suite — Streamlit yapılandırması
+[server]
+maxUploadSize = 400
+
+[theme]
+primaryColor = "#E8833A"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#FFF4EC"
+textColor = "#1A1A1A"
+
+[browser]
+gatherUsageStats = false
