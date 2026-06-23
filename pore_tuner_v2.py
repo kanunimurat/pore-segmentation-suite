@@ -71,6 +71,10 @@ def _inject_global_css():
     st.markdown(f"""
     <style>
     :root {{ --acc:{acc}; --acc-d:{acc_d}; }}
+    /* 'Atıf yap!' expander başlığını 3pt büyüt (yalnızca o sekme) */
+    [data-testid="stExpander"]:has(#pss-cite-mark) summary,
+    [data-testid="stExpander"]:has(#pss-cite-mark) summary p {{
+        font-size:calc(1rem + 3pt) !important; }}
     /* Ana panel üst boşluğunu azalt */
     .block-container, [data-testid="stMainBlockContainer"], [data-testid="stAppViewBlockContainer"] {{
         padding-top:1.6rem !important; }}
@@ -169,6 +173,24 @@ def _sample_aging_buffers(state):
             with open(fp, 'rb') as fh:
                 out.append(_NamedBytesIO(fh.read(), f'{code}_{state}.jpg'))
     return out
+
+def _sample_gallery_map():
+    """Gömülü gerçek traverten örnekleri: (etiket listesi, etiket->(yol,ad) eşlemesi)."""
+    names = {'KT': 'Karaman', 'NT': 'Noçe', 'PT': 'Pembe', 'GT': 'Gri'}
+    en = st.session_state.get('lang', 'en') == 'en'
+    before = 'before' if en else 'öncesi'
+    after = 'after' if en else 'sonrası'
+    labels = []
+    mapping = {}
+    for code in ['KT', 'NT', 'PT', 'GT']:
+        for state in ['pre', 'post']:
+            fp = os.path.join(_AGING_DIR, f'{code}_{state}.jpg')
+            if os.path.exists(fp):
+                w = before if state == 'pre' else after
+                lbl = f'{code} — {names.get(code, code)} ({w})'
+                labels.append(lbl)
+                mapping[lbl] = (fp, f'{code}_{state}.jpg')
+    return labels, mapping
 
 def _render_builtin_sample_picker(key):
     """Gömülü gerçek traverten örneklerini (KT/NT/PT/GT × öncesi/sonrası) seçtiren açılır menü."""
@@ -338,6 +360,7 @@ with st.sidebar:
 
     # ─── 📑 ATIF (kopyalanabilir) — marka altı, görünür konum ───
     with st.expander(T('cite_title'), expanded=False):
+        st.markdown('<span id="pss-cite-mark" style="display:none"></span>', unsafe_allow_html=True)
         _render_citations()
 
     # =============================================================
@@ -1519,8 +1542,15 @@ if app_mode == 'pore' and st.session_state.image_rgb is None:
     _mi.info(T('load_image_left'))
     _ce1, _ce2, _ce3 = st.columns([1, 1, 1])
     with _ce2:
+        _glabels, _gmap = _sample_gallery_map()
+        _gpick = st.selectbox(T('demo_pick_label'), _glabels, key='demo_sample_pick')
         if st.button(T('demo_sample'), use_container_width=True, key='demo_btn_main'):
-            if _load_sample_image():
+            if _gpick in _gmap:
+                _fp, _nm = _gmap[_gpick]
+                st.session_state.image_rgb = utils.load_image(_fp)
+                st.session_state.image_name = _nm
+                st.rerun()
+            elif _load_sample_image():
                 st.rerun()
         st.caption(T('demo_caption'))
     if st.session_state.get('lang', 'en') == 'en':
@@ -2334,7 +2364,7 @@ if app_mode == 'palette' and 'computed_palette' in st.session_state and st.sessi
                 with um3:
                     # Class olarak göster
                     st.markdown('**' + T('uni_classification') + '**')
-                    st.markdown(f'<div style="padding:8px 12px; background:#1f2937; border-radius:6px; text-align:center; font-size:14px; margin-top:8px;">{translate_cs(u["uniformity_class"])}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div style="padding:8px 12px; background:#1f2937; color:#FFFFFF; font-weight:600; border-radius:6px; text-align:center; font-size:14px; margin-top:8px;">{translate_cs(u["uniformity_class"])}</div>', unsafe_allow_html=True)
                 
                 # Lab istatistikleri
                 st.markdown('**' + T('uni_lab_stats') + '**')
