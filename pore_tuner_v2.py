@@ -222,8 +222,8 @@ def _render_builtin_sample_picker(key):
 _CITE_SOFTWARE = 'Sert, M. (2026). Pore Segmentation Suite v1.2: an open-source interactive tool for travertine pore segmentation [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.20514039'
 _CITE_ART1_TR = 'Sert, M. (2026). Pore Segmentation Suite: an open-source, interactive, multi-method tool for pore segmentation and colour characterization. [Yayın Aşamasında]'
 _CITE_ART1_EN = 'Sert, M. (2026). Pore Segmentation Suite: an open-source, interactive, multi-method tool for pore segmentation and colour characterization. (under review)'
-_CITE_ART2_TR = 'Sert, M. (2026). Beyond a single porosity number: pore-morphometric fingerprints of salt damage in travertines from a calibrated open-source image pipeline. [Yayın Aşamasında]'
-_CITE_ART2_EN = 'Sert, M. (2026). Beyond a single porosity number: pore-morphometric fingerprints of salt damage in travertines from a calibrated open-source image pipeline. (under review)'
+_CITE_ART2_TR = 'Sert, M. (2026). Image-based surface porosity of salt-aged travertine: limits and fingerprints. [Yayın Aşamasında]'
+_CITE_ART2_EN = 'Sert, M. (2026). Image-based surface porosity of salt-aged travertine: limits and fingerprints. (under review)'
 _CITE_BIBTEX = '@software{sert2026_pss,\n  author    = {Sert, Murat},\n  title     = {Pore Segmentation Suite v1.2: an open-source interactive tool for travertine pore segmentation},\n  year      = {2026},\n  publisher = {Zenodo},\n  doi       = {10.5281/zenodo.20514039},\n  url       = {https://doi.org/10.5281/zenodo.20514039}\n}'
 
 def _render_citations():
