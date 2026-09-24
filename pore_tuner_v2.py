@@ -148,8 +148,8 @@ _inject_global_css()  # Oğuz tarzı görsel kimlik (turuncu vurgu)
 # Çalışma ortamı: Streamlit Cloud mu, yerel mi? (Cloud'da repo /mount/src altına bağlanır)
 IS_CLOUD = os.path.abspath(__file__).startswith('/mount/src') or os.environ.get('PSS_CLOUD') == '1'
 
-_CHANGELOG_TR = "#### 🆕 v1.2.1 — Web sürümü + örnek galerisi\n- Tarayıcıdan kullanım (Streamlit Cloud — kurulum gerektirmez)\n- Gömülü gerçek traverten örnekleri: KT · NT · PT · GT (öncesi/sonrası)\n- Yaşlandırma modunda tek tıkla örnek before/after çiftleri\n- 'Gömülü örnek numune' seçici (Gözenek ve Palet modları)\n- Arayüz adı: 'Gözenek ve Renk Tespit Aracı'\n\n#### v1.2.0 — Görsel yenileme + gözenek boyut dağılımı\n- Gözenek boyut dağılımı grafiği (MIP benzeri, logaritmik eksen, D50)\n- Güvenilirlik rozeti (gözeneklilik rejimine göre uyarı: %2 altı / %2–8 / %8 üstü)\n- Tema-duyarlı (açık/koyu) grafikler; tek tık ZIP indirme\n- Sıcak turuncu görsel kimlik, daha okunaklı arayüz\n\n#### v1.1.0 — Çok dillilik + karşılaştırma\n- TR / EN dil seçimi\n- Çoklu-yöntem porozite yayılımı (aynı görüntüde algoritma bağımlılığı)\n- Karşılaştırma-kolaj oluşturucu\n\n#### v1.0.0 — İlk halka açık sürüm\n- 14 segmentasyon algoritması (klasik eşikleme, blob/bölge, renk-clustering, hibrit, modern DL: SAM 2 · CellPose)\n- 4 traverten için ön-yüklü renk paletleri (KT, GT, NT, PT)\n- 5 yanlış-pozitif filtresi; preset kaydet/yükle; K-means palet; piksel renk seçici; CSV/PNG çıktı"
-_CHANGELOG_EN = "#### 🆕 v1.2.1 — Web release + sample gallery\n- Runs in the browser (Streamlit Cloud — no installation)\n- Bundled real travertine samples: KT · NT · PT · GT (before/after)\n- One-click sample before/after pairs in Aging mode\n- 'Built-in sample' picker (Pore & Palette modes)\n- Interface renamed to 'Pore & Color Detection Tool'\n\n#### v1.2.0 — Visual refresh + pore-size distribution\n- Pore-size distribution chart (MIP-like, log axis, D50)\n- Reliability badge (porosity-regime warning: <2% / 2–8% / >8%)\n- Theme-aware (light/dark) charts; one-click ZIP download\n- Warm orange visual identity, more readable interface\n\n#### v1.1.0 — Multilingual + comparison\n- TR / EN language switch\n- Multi-method porosity spread (algorithm dependence on the same image)\n- Comparison-collage builder\n\n#### v1.0.0 — First public release\n- 14 segmentation algorithms (classical, blob/region, color-clustering, hybrid, modern DL: SAM 2 · CellPose)\n- Preloaded color palettes for 4 travertines (KT, GT, NT, PT)\n- 5 false-positive filters; preset save/load; K-means palette; pixel color picker; CSV/PNG export"
+_CHANGELOG_TR = "#### 🆕 v1.3.0 — Doğrulama ve tekrar-üretilebilirlik\n- ΔE artık doğrudan ortalama CIELAB'dan hesaplanıyor (v1.2'deki 8-bit sRGB yuvarlama hatası giderildi)\n- Metriğe özgü algısal eşikler: ΔE-2000 → PT/AT (Paravina 2015), ΔE-76 → Mokrzycki & Tatol; ΔE, 0'a değil algılanabilirlik eşiğine karşı sınanıyor\n- SAM 2 'prompted' modu (Sauvola adayları → SAM 2 sınırları); Cellpose 4 desteği\n- Sabit yüzdelikli yöntemler (DoG, Bottom-Hat, Frangi) için uyarı\n- 120 otomatik test (pytest + GitHub Actions); reproduce/ betikleri\n\n#### v1.2.1 — Web sürümü + örnek galerisi\n- Tarayıcıdan kullanım (Streamlit Cloud — kurulum gerektirmez)\n- Gömülü gerçek traverten örnekleri: KT · NT · PT · GT (öncesi/sonrası)\n- Yaşlandırma modunda tek tıkla örnek before/after çiftleri\n- 'Gömülü örnek numune' seçici (Gözenek ve Palet modları)\n- Arayüz adı: 'Gözenek ve Renk Tespit Aracı'\n\n#### v1.2.0 — Görsel yenileme + gözenek boyut dağılımı\n- Gözenek boyut dağılımı grafiği (MIP benzeri, logaritmik eksen, D50)\n- Güvenilirlik rozeti (gözeneklilik rejimine göre uyarı: %2 altı / %2–8 / %8 üstü)\n- Tema-duyarlı (açık/koyu) grafikler; tek tık ZIP indirme\n- Sıcak turuncu görsel kimlik, daha okunaklı arayüz\n\n#### v1.1.0 — Çok dillilik + karşılaştırma\n- TR / EN dil seçimi\n- Çoklu-yöntem porozite yayılımı (aynı görüntüde algoritma bağımlılığı)\n- Karşılaştırma-kolaj oluşturucu\n\n#### v1.0.0 — İlk halka açık sürüm\n- 14 segmentasyon algoritması (klasik eşikleme, blob/bölge, renk-clustering, hibrit, modern DL: SAM 2 · CellPose)\n- 4 traverten için ön-yüklü renk paletleri (KT, GT, NT, PT)\n- 5 yanlış-pozitif filtresi; preset kaydet/yükle; K-means palet; piksel renk seçici; CSV/PNG çıktı"
+_CHANGELOG_EN = "#### 🆕 v1.3.0 — Validation and reproducibility\n- ΔE is now computed directly from the mean CIELAB (8-bit sRGB rounding error of v1.2 removed)\n- Metric-specific perceptual thresholds: ΔE-2000 → PT/AT (Paravina 2015), ΔE-76 → Mokrzycki & Tatol; ΔE tested against the perceptibility threshold, not against 0\n- SAM 2 'prompted' mode (Sauvola candidates → SAM 2 outlines); Cellpose 4 support\n- Warning for fixed-percentile detectors (DoG, Bottom-Hat, Frangi)\n- 120 automated tests (pytest + GitHub Actions); reproduce/ scripts\n\n#### v1.2.1 — Web release + sample gallery\n- Runs in the browser (Streamlit Cloud — no installation)\n- Bundled real travertine samples: KT · NT · PT · GT (before/after)\n- One-click sample before/after pairs in Aging mode\n- 'Built-in sample' picker (Pore & Palette modes)\n- Interface renamed to 'Pore & Color Detection Tool'\n\n#### v1.2.0 — Visual refresh + pore-size distribution\n- Pore-size distribution chart (MIP-like, log axis, D50)\n- Reliability badge (porosity-regime warning: <2% / 2–8% / >8%)\n- Theme-aware (light/dark) charts; one-click ZIP download\n- Warm orange visual identity, more readable interface\n\n#### v1.1.0 — Multilingual + comparison\n- TR / EN language switch\n- Multi-method porosity spread (algorithm dependence on the same image)\n- Comparison-collage builder\n\n#### v1.0.0 — First public release\n- 14 segmentation algorithms (classical, blob/region, color-clustering, hybrid, modern DL: SAM 2 · CellPose)\n- Preloaded color palettes for 4 travertines (KT, GT, NT, PT)\n- 5 false-positive filters; preset save/load; K-means palette; pixel color picker; CSV/PNG export"
 
 # Örnek (demo) görüntü yolu ve yükleyici (#3)
 _SAMPLE_IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sample_images', 'sample_travertine.png')
@@ -219,12 +219,12 @@ def _render_builtin_sample_picker(key):
         st.session_state[guard] = choice
         st.rerun()
 
-_CITE_SOFTWARE = 'Sert, M. (2026). Pore Segmentation Suite v1.2: an open-source interactive tool for travertine pore segmentation [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.20514039'
+_CITE_SOFTWARE = 'Sert, M. (2026). Pore Segmentation Suite v1.3: an open-source, interactive, multi-method tool for pore segmentation and colour characterization [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.20416896'
 _CITE_ART1_TR = 'Sert, M. (2026). Pore Segmentation Suite: an open-source, interactive, multi-method tool for pore segmentation and colour characterization. [Yayın Aşamasında]'
 _CITE_ART1_EN = 'Sert, M. (2026). Pore Segmentation Suite: an open-source, interactive, multi-method tool for pore segmentation and colour characterization. (under review)'
 _CITE_ART2_TR = 'Sert, M. (2026). A Calibrated Open-Source Image-Analysis Method for Non-Destructive Surface-Porosity Estimation in Salt-Aged Travertine. [Yayın Aşamasında]'
 _CITE_ART2_EN = 'Sert, M. (2026). A Calibrated Open-Source Image-Analysis Method for Non-Destructive Surface-Porosity Estimation in Salt-Aged Travertine. (under review)'
-_CITE_BIBTEX = '@software{sert2026_pss,\n  author    = {Sert, Murat},\n  title     = {Pore Segmentation Suite v1.2: an open-source interactive tool for travertine pore segmentation},\n  year      = {2026},\n  publisher = {Zenodo},\n  doi       = {10.5281/zenodo.20514039},\n  url       = {https://doi.org/10.5281/zenodo.20514039}\n}'
+_CITE_BIBTEX = '@software{sert2026_pss,\n  author    = {Sert, Murat},\n  title     = {Pore Segmentation Suite v1.3: an open-source, interactive, multi-method tool for pore segmentation and colour characterization},\n  year      = {2026},\n  publisher = {Zenodo},\n  doi       = {10.5281/zenodo.20416896},\n  url       = {https://doi.org/10.5281/zenodo.20416896}\n}'
 
 def _render_citations():
     """Zenodo + makale atıflarını kopyalanabilir st.code bloklarında gösterir."""
@@ -312,7 +312,7 @@ with _hc1:
 with _hc2:
     st.markdown(
         """<div style="text-align:right; padding-top:22px;">
-  <span style="background:#FFF1E6; color:#C75B12; border:1px solid #F2C9A6; border-radius:6px; padding:3px 10px; font-size:.85rem; font-weight:700; white-space:nowrap;">v1.2.1</span>
+  <span style="background:#FFF1E6; color:#C75B12; border:1px solid #F2C9A6; border-radius:6px; padding:3px 10px; font-size:.85rem; font-weight:700; white-space:nowrap;">v1.3.0</span>
   <span style="background:#FFF1E6; color:#C75B12; border:1px solid #F2C9A6; border-radius:6px; padding:3px 10px; font-size:.85rem; font-weight:700; white-space:nowrap;">MIT</span>
   <div style="color:#9aa0a6; font-size:.8rem; margin-top:6px;">__STAT__</div>
 </div>""".replace('__STAT__', _hdr_stat),
@@ -344,7 +344,7 @@ if 'last_result' not in st.session_state:
 # ============================================================
 with st.sidebar:
     # ─── TOP BRANDING (üstte) ──────────────────────────────
-    _brand_subtitle = 'v1.2'
+    _brand_subtitle = 'v1.3'
     _brand_name = 'Pore Segmentation Suite' if st.session_state.get('lang', 'en') == 'en' else 'Gözenek ve Renk Tespit Aracı'
     st.markdown(f"""
     <div style="text-align:center; padding:12px 4px; margin-bottom:8px;
@@ -597,7 +597,8 @@ with st.sidebar:
                                                        T('ps_sam_b'),
                                                        T('ps_sam_l')])
                 params['model_name'] = params['model_name'].split(' ')[0]
-                params['mode'] = st.selectbox(T('collage_mode'), ['auto','point'])
+                params['mode'] = st.selectbox(T('collage_mode'), ['prompted','auto'],
+                                              help='prompted: Sauvola candidates -> SAM 2 outlines (v1.3.0 default); auto: segment-everything, masks > 1% of the image discarded')
                 st.info(T('ps_sam_download'))
             else:
                 st.error(T('ps_sam_not_installed'))
@@ -608,8 +609,8 @@ with st.sidebar:
         if 'CellPose' in algo:
             cp_available = segmentation._check_cellpose()
             if cp_available:
-                st.caption('🚀 **CellPose 3** — pretrained generalist segmenter')
-                params['model_type'] = st.selectbox('Model', ['cyto3','cyto2','nuclei'])
+                st.caption('🚀 **Cellpose** — pretrained generalist segmenter (v4: Cellpose-SAM)')
+                params['model_type'] = st.selectbox('Model (Cellpose 3 only)', ['cpsam','cyto3','cyto2','nuclei'])
                 params['diameter'] = st.slider(T('ps_obj_diameter'), 0, 100, 0)
                 if params['diameter'] == 0: params['diameter'] = None
                 params['flow_threshold'] = st.slider('Flow threshold', 0.0, 1.0, 0.4, step=0.05)
@@ -1465,7 +1466,7 @@ with st.sidebar:
     with st.expander(T('about_title'), expanded=False):
         if st.session_state.get('lang','en') == 'en':
             st.markdown("""
-        **Pore Segmentation Suite v1.2**
+        **Pore Segmentation Suite v1.3**
 
         An open-source tool that detects the surface porosity of travertines and
         similar natural building stones using image processing techniques.
@@ -1488,7 +1489,7 @@ with st.sidebar:
         """)
         else:
             st.markdown("""
-        **Gözenek ve Renk Tespit Yazılımı v1.2**
+        **Gözenek ve Renk Tespit Yazılımı v1.3**
 
         Travertenler ve benzer doğal yapı taşlarının yüzey gözenekliliğini
         görüntü işleme teknikleriyle tespit eden açık kaynak araç.
@@ -1789,6 +1790,11 @@ elif app_mode == 'pore' and st.session_state.image_rgb is not None:
         final_filter_params['must_be_dark'] = False
     
     final_mask, kept_props = filters.filter_components(raw_mask, gray, **final_filter_params)
+    # v1.3.0: fixed-percentile detectors return a near-constant area fraction
+    # (CV across 12 travertine specimens 0.05-0.11; see paper Fig. 6b)
+    if algo in ('DoG (Difference of Gaussians)', 'Bottom-Hat Morphology', 'Frangi Vesselness') or \
+            (algo.startswith('DoG') and 'Color' not in algo):
+        st.warning(T('fixed_fraction_warning'))
     metrics = filters.compute_metrics(final_mask, kept_props)
     
     # Sonucu state'e koy
@@ -2285,11 +2291,10 @@ if app_mode == 'palette' and 'computed_palette' in st.session_state and st.sessi
             mc3.metric('ΔE-2000 (modern)', f'{de2k:.2f}', help=T('de_help_2k'))
             
             # Yorum
-            if de2k < 1: color_box = '#22c55e'
-            elif de2k < 3.5: color_box = '#3b82f6'
-            elif de2k < 5: color_box = '#eab308'
-            elif de2k < 10: color_box = '#f97316'
-            else: color_box = '#ef4444'
+            # v1.3.0: CIEDE2000 PT/AT thresholds (Paravina et al. 2015)
+            if de2k < cs.DE2000_THRESHOLDS['PT']: color_box = '#22c55e'
+            elif de2k < cs.DE2000_THRESHOLDS['AT']: color_box = '#3b82f6'
+            else: color_box = '#f97316'
             
             st.markdown(
                 f'<div style="background:{color_box}22; border-left:4px solid {color_box}; '
@@ -2561,7 +2566,7 @@ if app_mode == 'aging' and 'aging_results' in st.session_state and st.session_st
         
         # Otomatik yorum
         st.markdown('##### ' + T('ag_auto_interp_hdr'))
-        interp = aa.auto_interpret(agg, ar['stat_test_dE'])
+        interp = aa.auto_interpret(agg, ar['stat_test_L'])  # v1.3.0: dE classed with metric-specific thresholds; paired test reported on L*
         if interp['damage_severity']=='minimal': damage_color='#22c55e'
         elif 'hafif' in interp['damage_severity']: damage_color='#3b82f6'
         elif 'orta' in interp['damage_severity']: damage_color='#eab308'

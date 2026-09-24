@@ -224,7 +224,9 @@ def segment_GMM(img_rgb, n_components=3, dark_component_count=1, sample_size=200
     """
     from sklearn.mixture import GaussianMixture
     gray = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2GRAY)
-    pixels = img_rgb.reshape(-1, 3).astype(np.float32)
+    # v1.3.0 fix: float64 (float32 made the covariance estimate fail with
+    # scikit-learn >= 1.8: "ill-defined empirical covariance").
+    pixels = img_rgb.reshape(-1, 3).astype(np.float64)
     n = min(sample_size, len(pixels))
     idx = np.random.RandomState(42).choice(len(pixels), size=n, replace=False)
     gmm = GaussianMixture(n_components=n_components, random_state=42, 
@@ -295,35 +297,80 @@ def _check_sam2():
     return _SAM2_AVAILABLE
 
 
-def segment_SAM2(img_rgb, model_name='sam2_b.pt', mode='auto', points=None, point_labels=None):
+def segment_SAM2(img_rgb, model_name='sam2_b.pt', mode='prompted', points=None, point_labels=None,
+                 max_area_frac=0.01, max_prompts=300, seed_fn=None, return_info=False):
     """
-    Segment Anything Model 2 (Meta, 2024).
-    mode='auto'  → tüm görüntüde otomatik tüm nesneleri segmente eder
-    mode='point' → verilen noktalardan başlayarak segment çıkarır
-    
-    Gerektiren: pip install ultralytics
-    Model boyutları: sam2_t.pt (39MB), sam2_s.pt (46MB), sam2_b.pt (80MB), sam2_l.pt (224MB)
+    Segment Anything Model 2 (Meta, 2024) via ultralytics.
+
+    mode='prompted' (default, v1.3.0): candidate pores are first located by a
+        content-adaptive classical detector (Sauvola by default; `seed_fn`
+        overrides it); the centroid of each candidate is given to SAM 2 as a
+        positive point prompt, and SAM 2 delineates the pore boundary. Masks
+        larger than `max_area_frac` of the image (background / matrix) or not
+        containing their seed point are discarded. Detection stays classical
+        and auditable; SAM 2 only refines the outline.
+    mode='auto'   : SAM 2 'segment everything'; masks larger than
+        `max_area_frac` are discarded. (Up to v1.2.x the union of ALL masks was
+        returned, which covered ~100 % of a travertine surface and was then
+        removed entirely by the dark-component filter.)
+    mode='point'  : user-supplied point prompts.
+
+    Returns (mask, gray, error_or_None[, info]).
+    Weights (e.g. sam2_b.pt, 154 MB) are downloaded by ultralytics on first use.
     """
     if not _check_sam2():
         return None, None, 'SAM2 yüklü değil. Kur: pip install ultralytics'
-    
+
     from ultralytics import SAM
     gray = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2GRAY)
-    
+    H, W = gray.shape
+    max_area = max_area_frac * H * W
+    info = {'mode': mode, 'n_prompts': 0, 'n_masks': 0, 'n_kept': 0}
+
     try:
-        sam = SAM(model_name)  # Model otomatik indirilir (ilk kullanımda)
-        if mode == 'point' and points is not None:
-            results = sam(img_rgb, points=points, labels=point_labels or [1]*len(points))
+        sam = SAM(model_name)
+        mask = np.zeros(gray.shape, bool)
+
+        def _accumulate(results, pts_chunk):
+            if not results or results[0].masks is None:
+                return
+            md = results[0].masks.data.cpu().numpy() > 0.5
+            info['n_masks'] += int(len(md))
+            for k, m in enumerate(md):
+                if m.shape != gray.shape:
+                    m = cv2.resize(m.astype(np.uint8), (W, H), interpolation=cv2.INTER_NEAREST) > 0
+                if m.sum() == 0 or m.sum() > max_area:
+                    continue
+                if pts_chunk is not None and k < len(pts_chunk):
+                    x, y = pts_chunk[k]
+                    if not m[min(y, H - 1), min(x, W - 1)]:
+                        continue
+                mask[m] = True
+                info['n_kept'] += 1
+
+        if mode == 'prompted':
+            if seed_fn is None:
+                from . import filters as _f
+                m0, g0 = segment_Sauvola(img_rgb)
+                _, seeds = _f.filter_components(m0, g0, min_area=8)
+            else:
+                _, seeds = seed_fn(img_rgb)
+            seeds = sorted(seeds, key=lambda p: -p.area)[:max_prompts]
+            pts = [[int(round(p.centroid[1])), int(round(p.centroid[0]))] for p in seeds]
+            info['n_prompts'] = len(pts)
+            if not pts:
+                return np.zeros(gray.shape, bool), gray, 'SAM2: aday gözenek bulunamadı'
+            for c in range(0, len(pts), 32):          # chunks keep memory bounded
+                chunk = pts[c:c + 32]
+                _accumulate(sam(img_rgb, points=[[q] for q in chunk], labels=[[1] for _ in chunk], verbose=False), chunk)
+        elif mode == 'point' and points is not None:
+            _accumulate(sam(img_rgb, points=points, labels=point_labels or [1] * len(points), verbose=False), None)
         else:
-            results = sam(img_rgb)  # otomatik mode
-        
-        # Tüm mask'leri birleştir
-        if results and len(results) > 0 and hasattr(results[0], 'masks') and results[0].masks is not None:
-            masks_data = results[0].masks.data.cpu().numpy()  # (N, H, W)
-            mask = np.any(masks_data > 0.5, axis=0)
-            return mask.astype(bool), gray, None
-        else:
-            return np.zeros(gray.shape, dtype=bool), gray, 'SAM2 hiç maske üretmedi'
+            _accumulate(sam(img_rgb, verbose=False), None)
+        if info['n_masks'] == 0:
+            return np.zeros(gray.shape, bool), gray, 'SAM2 hiç maske üretmedi'
+        out = (mask, gray, None)
+        return out + (info,) if return_info else out
     except Exception as e:
         return None, None, f'SAM2 hatası: {e}'
 
@@ -343,34 +390,41 @@ def _check_cellpose():
     return _CELLPOSE_AVAILABLE
 
 
-def segment_CellPose(img_rgb, model_type='cyto3', diameter=None, flow_threshold=0.4, 
-                       cellprob_threshold=0.0):
+def segment_CellPose(img_rgb, model_type='cpsam', diameter=None, flow_threshold=0.4,
+                       cellprob_threshold=0.0, max_area_frac=0.01):
     """
-    CellPose 3 generalist segmenter (Stringer & Pachitariu).
-    model_type: 'cyto3' (önerilen) | 'nuclei' | 'cyto2'
-    diameter: ortalama nesne çapı (None = otomatik tahmin)
-    
-    Gerektiren: pip install cellpose
+    Cellpose generalist segmenter (Stringer & Pachitariu). Works with Cellpose 3
+    (model_type 'cyto3') and Cellpose 4 ('cpsam', Cellpose-SAM; model_type and
+    channels are no longer used there). Pores are dark, so the inverted
+    grey image is segmented; objects larger than `max_area_frac` are dropped.
+
+    Gerektiren: pip install cellpose  (weights downloaded on first use)
     """
     if not _check_cellpose():
         return None, None, 'CellPose yüklü değil. Kur: pip install cellpose'
-    
+
     from cellpose import models
+    import importlib.metadata as _md
     gray = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2GRAY)
-    
     try:
-        # Cellpose koyu nesneler bekler — gerekirse invert et
-        model = models.CellposeModel(model_type=model_type, gpu=False)
-        # Inverted gray verirsek koyu pore'lar parlak nesne gibi davranır
-        masks, flows, styles = model.eval(255-gray, diameter=diameter, 
-                                            flow_threshold=flow_threshold,
-                                            cellprob_threshold=cellprob_threshold,
-                                            channels=[0,0])
-        mask = masks > 0
+        major = int(_md.version('cellpose').split('.')[0])
+        if major >= 4:
+            model = models.CellposeModel(gpu=False)
+            masks, flows, styles = model.eval(255 - gray, diameter=diameter,
+                                              flow_threshold=flow_threshold,
+                                              cellprob_threshold=cellprob_threshold)
+        else:
+            model = models.CellposeModel(model_type=model_type if model_type != 'cpsam' else 'cyto3', gpu=False)
+            masks, flows, styles = model.eval(255 - gray, diameter=diameter,
+                                              flow_threshold=flow_threshold,
+                                              cellprob_threshold=cellprob_threshold, channels=[0, 0])
+        masks = np.asarray(masks)
+        ids, counts = np.unique(masks[masks > 0], return_counts=True)
+        big = ids[counts > max_area_frac * masks.size]
+        mask = (masks > 0) & ~np.isin(masks, big)
         return mask, gray, None
     except Exception as e:
         return None, None, f'CellPose hatası: {e}'
-
 
 
 # ============================================================

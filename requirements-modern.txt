@@ -12,7 +12,7 @@
 ultralytics>=8.3.0
 
 # CellPose 3 — Pretrained cellular segmenter
-cellpose>=3.0
+cellpose>=3.0   # v4 (Cellpose-SAM) supported since PSS v1.3.0
 
 # PyTorch (yukarıdakiler bunu zaten çekecek, ama açıkça belirtmek için)
 torch>=2.0

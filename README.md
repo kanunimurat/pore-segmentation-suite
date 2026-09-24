@@ -1,7 +1,7 @@
 # 🪨 Pore Segmentation Suite
 
 **An interactive pore-segmentation tool for travertines (and similar natural stones).**
-Version: 1.2 — 2026  
+Version: 1.3.0 — 2026  
 License: MIT  |  Developer: Murat SERT, AKU
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20416896.svg)](https://doi.org/10.5281/zenodo.20416896)
@@ -20,20 +20,37 @@ Use the app directly in your browser — no Python required:
 
 ---
 
-## ✨ What's new (v1.2)
+## ✨ What's new (v1.3.0 — validation & reproducibility)
 
-- **Pore-size distribution chart** (MIP-like, logarithmic axis, D50, imaging-resolution limit)
-- **Reliability badge** — warning by porosity regime (<2% / 2–8% / >8%)
-- **"Try a sample image"** demo button + one-click **Download all outputs as ZIP**
-- **Theme-aware** inline-SVG charts (light/dark)
-- Warm orange visual identity, glowing brand title, larger and more readable interface
+- **Automated tests**: 120 pytest tests run on every push (GitHub Actions, Linux/Windows/macOS). CIEDE2000 is checked against the 34 reference pairs of Sharma, Wu & Dalal (2005).
+- **Correct ΔE**: computed directly from the mean CIELAB (the 8-bit sRGB round-trip of v1.2 shifted ΔE-2000 by up to 0.24).
+- **Metric-specific perceptual thresholds**: ΔE-2000 → PT = 0.8 / AT = 1.8 (Paravina et al., 2015); ΔE-76 → Mokrzycki & Tatol (2011) classes. ΔE is tested against the perceptibility threshold, not against zero.
+- **SAM 2 prompted mode**: Sauvola candidates → SAM 2 pore outlines. **Cellpose 4** (Cellpose-SAM) supported.
+- **Fixed-percentile warning** for DoG, Bottom-Hat and Frangi (they mark a nearly constant area fraction whatever the stone).
+- **`reproduce/`** scripts regenerate every table and figure of the SoftwareX paper from the raw images.
 
-> **This release (v1.2.0) DOI:** https://doi.org/10.5281/zenodo.20514039
-
-> Previous: **v1.1** — TR/EN language switch, multi-method porosity spread, comparison collage.
+> Previous: **v1.2.1** — web release, sample gallery; **v1.2.0** — pore-size distribution, reliability badge.
 
 ---
 
+## 🧪 Tests and reproducibility
+
+```bash
+pip install -r requirements.txt -r requirements-test.txt
+python -m pytest            # 120 tests
+```
+
+| Script | Regenerates |
+|---|---|
+| `reproduce/benchmark_algorithms.py IMAGE --palette KT` | Table 2 / Figure 6 data (12 setup-free algorithms, interface defaults; logs SHA-256, parameters, library versions) |
+| `reproduce/make_figures.py fig5 / fig6 / figS3` | Figures 5, 6 and S3 |
+| `reproduce/reproduce_aging_example.py PRE POST --prefix NT-D` | Table 3 and Supplementary Note S1 |
+| `reproduce/reproduce_dataset_matrix.py ROOT` | Supplementary Table S1 (96 specimen pairs) |
+| `reproduce/run_foundation_models.py IMAGES --sam-weights sam2_b.pt` | SAM 2 / Cellpose runs (porosity, pore count, time) |
+
+Library versions matter: MSER output differs between OpenCV 4.x and 5.x, so `requirements.txt` pins OpenCV < 5.
+
+---
 
 ## 🚀 Quick Start (3 steps)
 
@@ -102,8 +119,8 @@ xattr -dr com.apple.quarantine "Gözenek Tespit.app"
 - **MSER + Color Filter**
 
 ### 🚀 Modern Deep Learning (optional)
-- **SAM 2** (Segment Anything Model 2, Meta 2024)
-- **CellPose 3** (Pretrained generalist)
+- **SAM 2** (Segment Anything Model 2, Meta 2024) — default *prompted* mode: classical candidates → SAM 2 outlines
+- **Cellpose** (v3 `cyto3` or v4 Cellpose-SAM)
 
 **Extra setup for DL:**
 ```bash
@@ -200,17 +217,14 @@ pore-segmentation-suite/
 
 ## 📚 Citation
 
-If you use this tool, please cite it as:
+If you use this tool, please cite the software (the concept DOI always resolves to the latest version):
 
-> Sert, M. (2026). *Pore Segmentation Suite v1.2:*  
-> *An open-source interactive tool for travertine pore segmentation.*  
-> Zenodo. https://doi.org/10.5281/zenodo.20514039
+Sert, M. (2026). Pore Segmentation Suite: an open-source, interactive, multi-method tool
+for pore segmentation and colour characterization (v1.3.0) [Computer software]. Zenodo.
+https://doi.org/10.5281/zenodo.20416896
 
-And the accompanying methodology paper:
-
-> Sert, M. (2026). *Per-stone adaptive pore segmentation of travertines:*  
-> *A comparative benchmark of classical thresholding, extremal regions,*  
-> *and modern foundation models.* (in preparation)
+Software paper: Sert, M. Pore Segmentation Suite: an open-source, interactive, multi-method tool
+for pore segmentation and colour characterization. SoftwareX (under review).
 
 The `CITATION.cff` file is automatically recognized by GitHub.
 

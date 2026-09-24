@@ -140,22 +140,83 @@ def delta_e_2000(rgb1, rgb2):
     return float(skcolor.deltaE_ciede2000(lab1, lab2)[0, 0])
 
 
-def interpret_delta_e(delta_e):
+def delta_e_lab(lab1, lab2, method='2000'):
     """
-    ΔE değerinin görsel anlamı (Pascale 2002, Mokrzycki & Tatol 2011).
+    Colour difference between two CIELAB triplets (no sRGB round-trip).
+    method: '76' (Euclidean dE*ab), '94' (CIE94, graphic arts) or '2000'
+    (CIEDE2000, kL = kC = kH = 1). Validated against the 34 reference pairs
+    of Sharma, Wu & Dalal (2005) in tests/test_ciede2000_sharma.py.
     """
-    if delta_e < 1:
-        return "Fark edilmez (perceptually identical)"
-    elif delta_e < 2:
-        return "Sadece eğitimli göz fark eder (just noticeable)"
-    elif delta_e < 3.5:
-        return "Eğitimsiz göz farkı zar zor görür"
-    elif delta_e < 5:
-        return "Açık fark (clear difference)"
-    elif delta_e < 10:
-        return "Belirgin görsel fark"
-    else:
-        return "Çok farklı (different color)"
+    a = np.asarray(lab1, dtype=np.float64).reshape(1, 1, 3)
+    b = np.asarray(lab2, dtype=np.float64).reshape(1, 1, 3)
+    if str(method) == '76':
+        return float(np.sqrt(((a - b) ** 2).sum()))
+    if str(method) == '94':
+        return float(skcolor.deltaE_ciede94(a, b)[0, 0])
+    return float(skcolor.deltaE_ciede2000(a, b)[0, 0])
+
+
+# ------------------------------------------------------------------
+# Perceptual interpretation (v1.3.0)
+# ------------------------------------------------------------------
+# Each metric is interpreted only with thresholds that were defined FOR
+# THAT METRIC:
+#   * CIEDE2000: 50:50% perceptibility (PT) and acceptability (AT)
+#     thresholds, dE00 = 0.8 and 1.8 (Paravina et al., 2015, J Esthet
+#     Restor Dent 27:S1-S9, doi:10.1111/jerd.12149; 175 observers, 7 sites).
+#   * CIE76 dE*ab: the five observer classes of Mokrzycki & Tatol (2011,
+#     Machine Graphics & Vision 20(4):383-411, section 6.2), which are
+#     defined for the Euclidean CIELAB difference.
+#   * CIE94: no widely validated perceptual thresholds -> no class.
+# Up to v1.2.x the Mokrzycki & Tatol classes (plus two extra, unsourced
+# classes 5-10 and >=10) were applied to dE00, which mixes metrics.
+DE2000_THRESHOLDS = {'PT': 0.8, 'AT': 1.8}
+
+DE2000_CLASSES = (
+    "Algılanamaz (below perceptibility threshold)",
+    "Algılanabilir, kabul edilebilir (perceptible, acceptable)",
+    "Kabul edilebilirlik eşiğinin üzerinde (beyond acceptability threshold)",
+)
+MT_CLASSES_76 = (
+    (1.0, "Fark edilmez (not noticed)"),
+    (2.0, "Sadece deneyimli gözlemci fark eder (experienced observer only)"),
+    (3.5, "Deneyimsiz gözlemci de fark eder (unexperienced observer notices)"),
+    (5.0, "Açık fark (clear difference)"),
+    (float('inf'), "İki farklı renk (two different colours)"),
+)
+NO_CLASS_94 = "Doğrulanmış eşik yok (no validated threshold for CIE94)"
+
+
+def perceptual_reference(method='2000', pt=None):
+    """Lower bound of the 'perceptible' range for a metric (None if undefined)."""
+    m = str(method)
+    if m == '2000':
+        return float(pt) if pt is not None else DE2000_THRESHOLDS['PT']
+    if m == '76':
+        return MT_CLASSES_76[0][0]
+    return None
+
+
+def interpret_delta_e(delta_e, method='2000', pt=None, at=None):
+    """
+    Perceptual class of a colour difference, using thresholds defined for
+    the chosen metric (see the block comment above). pt/at override the
+    CIEDE2000 thresholds (e.g. for material-specific values).
+    """
+    m = str(method)
+    if m == '2000':
+        pt = DE2000_THRESHOLDS['PT'] if pt is None else float(pt)
+        at = DE2000_THRESHOLDS['AT'] if at is None else float(at)
+        if delta_e < pt:
+            return DE2000_CLASSES[0]
+        if delta_e < at:
+            return DE2000_CLASSES[1]
+        return DE2000_CLASSES[2]
+    if m == '76':
+        for upper, label in MT_CLASSES_76:
+            if delta_e < upper:
+                return label
+    return NO_CLASS_94
 
 
 # ============================================================

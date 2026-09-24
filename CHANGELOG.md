@@ -2,6 +2,30 @@
 
 Sürüm geçmişi — [Semantic Versioning](https://semver.org/lang/tr/).
 
+## [1.3.0] — 2026-09-24 — Validation and reproducibility (SoftwareX revision)
+
+### Fixed
+- **ΔE computation** (`aging_analysis.compute_pair_color_change`): the colour difference is now computed directly from the mean CIELAB coordinates. Up to v1.2.x the mean colour was converted to 8-bit sRGB (truncated) and back, which shifted ΔE-2000 by up to 0.24 units and made ΔE inconsistent with the reported ΔL*, Δa*, Δb*.
+- **GMM segmentation** failed with scikit-learn ≥ 1.8 ("ill-defined empirical covariance"); now uses float64.
+- **SAM 2**: the automatic mode returned the union of all masks (≈100 % of a stone surface), which the dark-component filter then removed entirely. New default `mode='prompted'`: Sauvola candidates are given to SAM 2 as point prompts and SAM 2 delineates each pore; masks larger than 1 % of the image are discarded in every mode.
+- **Cellpose**: updated for the Cellpose 4 API (Cellpose-SAM, `cpsam`); Cellpose 3 still supported.
+
+### Changed
+- **Perceptual interpretation** is now metric-specific: ΔE-2000 → CIEDE2000 50:50 % perceptibility/acceptability thresholds PT = 0.8, AT = 1.8 (Paravina et al., 2015); ΔE-76 → the five observer classes of Mokrzycki & Tatol (2011); ΔE-94 → no class. The unsourced 5–10 and ≥10 classes were removed. The previous "2.3 perceptibility threshold" (a CIE76 JND) is no longer used for ΔE-2000.
+- ΔE is tested against the perceptibility threshold of the metric (not against 0), with a Shapiro–Wilk-dependent choice between the one-sample t-test and the Wilcoxon signed-rank test.
+- `opencv-python-headless` pinned to `< 5`: the MSER output changes in OpenCV 5.x.
+- Warning in the interface for fixed-percentile detectors (DoG, Bottom-Hat, Frangi), which return a nearly constant area fraction regardless of the stone.
+
+### Added
+- **Automated test suite** (`tests/`, 120 tests, pytest; GitHub Actions on Linux/Windows/macOS): CIEDE2000 vs. the 34 reference pairs of Sharma et al. (2005), sRGB→CIELAB reference values, aging statistics vs. SciPy, perceptual classes, segmentation vs. a synthetic ground truth.
+- **`reproduce/` scripts** that regenerate every table and figure of the SoftwareX paper from the raw images and log the image SHA-256, all parameters and library versions.
+
+## [1.2.1] — 2026-06-07
+
+### Added
+- **Windows launcher** (`Baslat.bat`): one double-click installs dependencies on first run and starts the app.
+- **Streamlit Community Cloud compatibility**: switched to `opencv-python-headless` so the app can be hosted online (Try-it-online link in README).
+
 ## [1.2.0] — 2026-06-02 — Görsel yenileme + gözenek boyut dağılımı
 
 ### Eklenen
