@@ -409,7 +409,8 @@ def segment_CellPose(img_rgb, model_type='cpsam', diameter=None, flow_threshold=
     try:
         major = int(_md.version('cellpose').split('.')[0])
         if major >= 4:
-            model = models.CellposeModel(gpu=False)
+            # 'cpsam' = Cellpose-SAM weights (Pachitariu et al. 2025); Cellpose >= 4.2 defaults to 'cpsam_v2'
+            model = models.CellposeModel(gpu=False, pretrained_model=model_type or 'cpsam')
             masks, flows, styles = model.eval(255 - gray, diameter=diameter,
                                               flow_threshold=flow_threshold,
                                               cellprob_threshold=cellprob_threshold)
