@@ -1,0 +1,6 @@
+# Windows batch files must keep CRLF line endings (labels/goto break with LF)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+# macOS launchers must keep LF
+*.command text eol=lf
+*.sh text eol=lf
