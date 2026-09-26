@@ -14,7 +14,7 @@ import math
 import numpy as np
 
 
-def pore_size_distribution(kept_props, pixel_scale_mm=0.091, n_bins=12, weight='area'):
+def pore_size_distribution(kept_props, pixel_scale_mm=0.1277, n_bins=12, weight='area'):
     """kept_props: list of skimage regionprops (need .area in pixels).
     weight: 'area' (MIP-like, area-weighted) or 'count' (number-weighted).
     Returns a dict or None if no pores."""

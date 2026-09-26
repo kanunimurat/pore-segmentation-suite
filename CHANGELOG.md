@@ -2,6 +2,20 @@
 
 Sürüm geçmişi — [Semantic Versioning](https://semver.org/lang/tr/).
 
+## [1.3.1] — 2026-09-27 — Colour management and accuracy evaluation (SoftwareX revision)
+
+### Fixed
+- **Colour management** (`utils.load_image`): an embedded ICC profile that is not sRGB (e.g. macOS *Generic RGB* written by scanner software) is now converted to sRGB (relative colorimetric) before any analysis. Previously the pixels were read as if they were sRGB, which shifted CIELAB values and ΔE; on the 96 specimen pairs of the paper ΔE-2000 decreases by about 13 % with an unchanged ranking (Spearman ρ = 0.985). Untagged images are treated as sRGB.
+- **Pixel size**: mm-based areas and pore sizes used a hard-coded 0.091 mm per pixel. The value is now an interface setting; the default 0.1277 mm is the measured pixel size of the bundled samples (300 dpi scans reduced by 1.508). Porosity (%) and pore counts are unaffected.
+- `reproduce/make_figures.py figS4`: missing import.
+
+### Added
+- `reproduce/select_gt_crops.py`: seeded, reproducible selection of annotation crops (non-overlapping; `--distinct-images` draws each crop of a stone from a different image).
+- `reproduce/evaluate_ground_truth.py`: accuracy against manual annotation — Dice, IoU, precision/recall, ±1 px tolerant Dice, porosity error, object-level F1 (IoU > 0.5), size-class recall, bootstrap intervals, Friedman + Kendall W, Holm-corrected Wilcoxon against the best method, inter-annotator agreement (human ceiling).
+- `reproduce/crop_specimen.py`: separates a scanned specimen from a dark background without resampling and exports it at a common pixel size.
+- `reproduce/benchmark_algorithms.py --palette none`: skips the three palette-based methods for stones without a user-defined palette.
+- Tests: colour management, palette switch, crop selection and accuracy metrics (137 tests in total).
+
 ## [1.3.0] — 2026-09-24 — Validation and reproducibility (SoftwareX revision)
 
 ### Fixed

@@ -7,6 +7,8 @@ scripted, archived runs - no manual step between software output and figure.
     python reproduce/make_figures.py fig5 IMAGE --palette KT --out figures/
     python reproduce/make_figures.py fig6 LONG_CSV --out figures/
     python reproduce/make_figures.py figS3 PAIRS_CSV --out figures/   (S1_pairs_all.csv; NT/KCl)
+    python reproduce/make_figures.py figS4 MASK_DIR --images IMG_DIR --out figures/
+        (masks from run_foundation_models.py; panels for KT-A1 and GT-A6)
 
 fig5 runs the twelve setup-free algorithms itself (same code and defaults
 as reproduce/benchmark_algorithms.py) and writes the numbers it plotted to
@@ -205,15 +207,46 @@ def figS3(args):
     print(d[["specimen", "pre_L", "post_L", "dE00"]].to_string(index=False))
 
 
+def figS4(args):
+    """Supplementary Fig. S4: Sauvola candidates vs SAM 2 outlines (500 x 500 px crops)."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from PIL import Image
+    from modules import utils
+    rows = [("KT-A1", [("Sauvola", "Sauvola", "#0072B2"), ("SAM 2 (prompted)", "SAM", "#D55E00"),
+                       ("SAM 2 (auto, v1.2 behaviour + size filter)", "SAM_auto", "#CC79A7")]),
+            ("GT-A6", [("original", None, None), ("Sauvola", "Sauvola", "#0072B2"),
+                       ("SAM 2 (prompted)", "SAM", "#D55E00")])]
+    fig, axes = plt.subplots(2, 3, figsize=(7.48, 5.2), dpi=args.dpi)
+    for r, (spec, panels) in enumerate(rows):
+        img = utils.load_image(os.path.join(args.images, f"{spec}.jpg")).astype(float)
+        for c, (title, key, col) in enumerate(panels):
+            o = img.copy()
+            if key:
+                mp = os.path.join(args.input, f"{spec}_{key}_mask.png")
+                m = np.array(Image.open(mp)) > 0
+                o[m] = 0.35 * o[m] + 0.65 * np.array(_hex_rgb(col), float)
+            ax = axes[r, c]
+            ax.imshow(o[100:600, 100:600].astype(np.uint8))
+            ax.set_xticks([]); ax.set_yticks([])
+            ax.set_title(f"{spec} — {title}", fontsize=7)
+    fig.tight_layout()
+    os.makedirs(args.out, exist_ok=True)
+    for ext in ("png", "tiff"):
+        fig.savefig(os.path.join(args.out, f"FigureS4_SAM2_outlines.{ext}"), dpi=args.dpi)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("which", choices=["fig5", "fig6", "figS3"])
+    ap.add_argument("which", choices=["fig5", "fig6", "figS3", "figS4"])
+    ap.add_argument("--images", default=None)
     ap.add_argument("input")
     ap.add_argument("--palette", default="KT")
     ap.add_argument("--out", default="figures")
     ap.add_argument("--dpi", type=int, default=600)
     args = ap.parse_args()
-    {"fig5": fig5, "fig6": fig6, "figS3": figS3}[args.which](args)
+    {"fig5": fig5, "fig6": fig6, "figS3": figS3, "figS4": figS4}[args.which](args)
 
 
 if __name__ == "__main__":

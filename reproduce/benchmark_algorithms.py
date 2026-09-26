@@ -31,6 +31,7 @@ from modules import filters, palettes, segmentation as seg, utils  # noqa: E402
 
 GUI_FILTER_DEFAULTS = dict(min_area=8, must_be_dark=True, dark_thresh_factor=0.95)
 COLOR_DEFAULTS = dict(max_distance=25, color_space="lab")
+PALETTE_METHODS = ("Color-Distance", "DoG+Color", "MSER+Color")   # need a user-defined pore palette
 
 
 def build_methods(pore_colors):
@@ -71,7 +72,9 @@ def sha256(path):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("image")
-    ap.add_argument("--palette", default="KT", help="stone palette code in palettes/ (KT, GT, NT, PT)")
+    ap.add_argument("--palette", default="KT",
+                    help="stone palette code in palettes/ (KT, GT, NT, PT); 'none' skips the three "
+                         "palette-based methods (Color-Distance, DoG+Color, MSER+Color)")
     ap.add_argument("--repeats", type=int, default=3, help="timing repeats (median reported)")
     ap.add_argument("--out", default="results")
     ap.add_argument("--save-masks", action="store_true")
@@ -79,12 +82,14 @@ def main():
 
     os.makedirs(args.out, exist_ok=True)
     img = utils.load_image(args.image)
-    pal = palettes.load_palette(args.palette)
-    pore_colors = palettes.palette_to_dict(pal)
+    use_palette = args.palette.lower() != "none"
+    pore_colors = palettes.palette_to_dict(palettes.load_palette(args.palette)) if use_palette else None
     stem = os.path.splitext(os.path.basename(args.image))[0]
 
     rows = []
-    for name, family, fn, params in build_methods(pore_colors):
+    for name, family, fn, params in build_methods(pore_colors or {}):
+        if pore_colors is None and name in PALETTE_METHODS:
+            continue
         times, final, kept = [], None, None
         for _ in range(max(1, args.repeats)):
             t0 = time.perf_counter()

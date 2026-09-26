@@ -61,7 +61,7 @@ def filter_components(mask, gray,
     return final, kept
 
 
-def compute_metrics(mask, kept_props, pixel_scale_mm=0.091):
+def compute_metrics(mask, kept_props, pixel_scale_mm=0.1277):
     """Pore istatistiklerini hesapla — sayı, alan, dairesellik vb."""
     total_area_px = mask.size
     pore_area_px = int(mask.sum())

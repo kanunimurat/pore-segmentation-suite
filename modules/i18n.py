@@ -280,7 +280,7 @@ TRANSLATIONS = {
     'mode_pore_banner': {'tr': '🔬 Gözenek Analizi Modu', 'en': '🔬 Pore Segmentation Mode'},
     'mode_palette_banner': {'tr': '🎨 Renk Paleti Modu', 'en': '🎨 Color Palette Mode'},
     'mode_aging_banner': {'tr': '🔄 Yaşlandırma Analizi Modu', 'en': '🔄 Aging Analysis Mode'},
-    'footer_text': {'tr': 'Gözenek ve Renk Tespit Aracı v1.3.0 — 2026  |  Dr. Murat SERT — Afyon Kocatepe Üniversitesi', 'en': 'Pore and Color Segmentation Suite v1.3.0 — 2026  |  Murat SERT (Ph.D) — Afyon Kocatepe University'},
+    'footer_text': {'tr': 'Gözenek ve Renk Tespit Aracı v1.3.1 — 2026  |  Dr. Murat SERT — Afyon Kocatepe Üniversitesi', 'en': 'Pore and Color Segmentation Suite v1.3.1 — 2026  |  Murat SERT (Ph.D) — Afyon Kocatepe University'},
     'dominant_colors_label': {'tr': 'dominant renk', 'en': 'dominant colors'},
 
     # ---- Phase 6 additions (Aging Analysis i18n) ----
@@ -532,6 +532,8 @@ TRANSLATIONS = {
     'ps_obj_diameter': {'tr': 'Ortalama nesne çapı (px, 0=auto)', 'en': 'Average object diameter (px, 0=auto)'},
     'ps_cellpose_not_installed': {'tr': '⚠️ CellPose yüklü değil.', 'en': '⚠️ CellPose is not installed.'},
     'ps_min_pore_area': {'tr': 'Min pore alanı (px)', 'en': 'Min pore area (px)'},
+    'ps_pixel_mm': {'tr': 'Piksel boyutu (mm/piksel)', 'en': 'Pixel size (mm/px)'},
+    'ps_pixel_mm_help': {'tr': 'Yalnızca mm cinsinden alan ve boyut çıktılarını etkiler (gözeneklilik % ve sayı etkilenmez). 300 dpi tarama = 0,0847 mm; 600 dpi = 0,0423 mm. Görüntü sonradan küçültüldüyse ölçekle çarpın. Varsayılan 0,1277 mm: gömülü örnek görüntüler (300 dpi, 1/1,508).', 'en': 'Affects only mm-based areas and sizes (porosity % and counts are unaffected). 300 dpi scan = 0.0847 mm; 600 dpi = 0.0423 mm. If the image was resized after scanning, multiply by the resize factor. Default 0.1277 mm: the bundled sample images (300 dpi, reduced by 1.508).'},
     'ps_ecc_filter': {'tr': 'Eccentricity filtresi (bantları reddet)', 'en': 'Eccentricity filter (reject bands)'},
     'ps_max_ecc': {'tr': 'Max eccentricity (1=çizgi, 0=daire)', 'en': 'Max eccentricity (1=line, 0=circle)'},
     'ps_sol_filter': {'tr': 'Solidity filtresi (düzensiz şekilleri reddet)', 'en': 'Solidity filter (reject irregular shapes)'},

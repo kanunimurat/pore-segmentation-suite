@@ -1,7 +1,7 @@
 # 🪨 Pore Segmentation Suite
 
 **An interactive pore-segmentation tool for travertines (and similar natural stones).**
-Version: 1.3.0 — 2026  
+Version: 1.3.1 — 2026  
 License: MIT  |  Developer: Murat SERT, AKU
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20416896.svg)](https://doi.org/10.5281/zenodo.20416896)
@@ -20,9 +20,17 @@ Use the app directly in your browser — no Python required:
 
 ---
 
-## ✨ What's new (v1.3.0 — validation & reproducibility)
+## ✨ What's new (v1.3.1 — colour management & accuracy evaluation)
 
-- **Automated tests**: 120 pytest tests run on every push (GitHub Actions, Linux/Windows/macOS). CIEDE2000 is checked against the 34 reference pairs of Sharma, Wu & Dalal (2005).
+- **Colour management**: images with an embedded colour profile (e.g. macOS *Generic RGB*, Display P3, Adobe RGB) are converted to sRGB on loading, so colour-based methods and ΔE no longer depend on the software that exported the image. Untagged images are treated as sRGB.
+- **Adjustable pixel size** (mm per pixel) for mm-based areas and pore sizes; the default, 0.1277 mm, is that of the bundled samples (300 dpi scans reduced by 1.508). Porosity (%) and pore counts do not depend on it.
+- **Accuracy against manual annotation**: `reproduce/select_gt_crops.py` (seeded crop selection) and `reproduce/evaluate_ground_truth.py` (pixel, ±1 px tolerant and object-level metrics, bootstrap intervals, Friedman / Holm-corrected Wilcoxon, inter-annotator agreement).
+- `reproduce/crop_specimen.py` separates a scanned specimen from its background without resampling; `benchmark_algorithms.py --palette none` runs the palette-free algorithms on stones without a palette.
+- **137 automated tests**.
+
+### v1.3.0 — validation & reproducibility
+
+- **Automated tests**: pytest tests run on every push (GitHub Actions, Linux/Windows/macOS). CIEDE2000 is checked against the 34 reference pairs of Sharma, Wu & Dalal (2005).
 - **Correct ΔE**: computed directly from the mean CIELAB (the 8-bit sRGB round-trip of v1.2 shifted ΔE-2000 by up to 0.24).
 - **Metric-specific perceptual thresholds**: ΔE-2000 → PT = 0.8 / AT = 1.8 (Paravina et al., 2015); ΔE-76 → Mokrzycki & Tatol (2011) classes. ΔE is tested against the perceptibility threshold, not against zero.
 - **SAM 2 prompted mode**: Sauvola candidates → SAM 2 pore outlines. **Cellpose 4** (Cellpose-SAM) supported.
@@ -37,18 +45,20 @@ Use the app directly in your browser — no Python required:
 
 ```bash
 pip install -r requirements.txt -r requirements-test.txt
-python -m pytest            # 120 tests
+python -m pytest            # 137 tests
 ```
 
 | Script | Regenerates |
 |---|---|
 | `reproduce/benchmark_algorithms.py IMAGE --palette KT` | Table 2 / Figure 6 data (12 setup-free algorithms, interface defaults; logs SHA-256, parameters, library versions) |
-| `reproduce/make_figures.py fig5 / fig6 / figS3` | Figures 5, 6 and S3 |
+| `reproduce/make_figures.py fig5 / fig6 / figS3 / figS4` | Figures 5, 6, S3 and S4 |
 | `reproduce/reproduce_aging_example.py PRE POST --prefix NT-D` | Table 3 and Supplementary Note S1 |
 | `reproduce/reproduce_dataset_matrix.py ROOT` | Supplementary Table S1 (96 specimen pairs) |
 | `reproduce/run_foundation_models.py IMAGES --sam-weights sam2_b.pt` | SAM 2 / Cellpose runs (porosity, pore count, time) |
+| `reproduce/select_gt_crops.py` / `reproduce/evaluate_ground_truth.py` | Annotation crops and Supplementary Table S3 (accuracy against manual annotation) |
+| `reproduce/crop_specimen.py` | Specimen cropping and export at a common pixel size (tuff and basalt, Supplementary Note S4) |
 
-Library versions matter: MSER output differs between OpenCV 4.x and 5.x, so `requirements.txt` pins OpenCV < 5.
+Library versions matter: MSER output differs between OpenCV 4.x and 5.x, so `requirements.txt` pins OpenCV < 5. With pinned versions the results are identical between runs; across CPU architectures only MSER differs slightly (≤ 0.24 percentage points of porosity between Apple silicon and x86-64).
 
 ---
 
@@ -220,7 +230,7 @@ pore-segmentation-suite/
 If you use this tool, please cite the software (the concept DOI always resolves to the latest version):
 
 Sert, M. (2026). Pore Segmentation Suite: an open-source, interactive, multi-method tool
-for pore segmentation and colour characterization (v1.3.0) [Computer software]. Zenodo.
+for pore segmentation and colour characterization (v1.3.1) [Computer software]. Zenodo.
 https://doi.org/10.5281/zenodo.20416896
 
 Software paper: Sert, M. Pore Segmentation Suite: an open-source, interactive, multi-method tool

@@ -6,16 +6,53 @@ import cv2
 from PIL import Image
 
 
-def load_image(path_or_buffer):
-    """Path veya BytesIO'dan RGB numpy array yükle."""
-    if hasattr(path_or_buffer, 'read'):
-        img = Image.open(path_or_buffer).convert('RGB')
-        return np.array(img)
-    else:
-        img = cv2.imread(str(path_or_buffer))
-        if img is None:
-            raise IOError(f'Görüntü okunamadı: {path_or_buffer}')
-        return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+SRGB_PROFILE = None
+LAST_LOAD_INFO = {}
+
+
+def _srgb_profile():
+    global SRGB_PROFILE
+    if SRGB_PROFILE is None:
+        from PIL import ImageCms
+        SRGB_PROFILE = ImageCms.ImageCmsProfile(ImageCms.createProfile('sRGB'))
+    return SRGB_PROFILE
+
+
+def load_image(path_or_buffer, to_srgb=True):
+    """Load an image as an 8-bit RGB numpy array.
+
+    v1.3.1: colour-managed. If the file embeds an ICC profile that is not sRGB
+    (e.g. macOS 'Generic RGB', Display P3, Adobe RGB), the pixels are converted
+    to sRGB with the relative-colorimetric intent before any analysis, because
+    every colour computation in the suite (CIELAB, CIEDE2000) assumes sRGB.
+    Files without a profile are taken as sRGB, as before. EXIF orientation is
+    applied. Details of the last call are kept in utils.LAST_LOAD_INFO.
+    """
+    import io
+    from PIL import ImageCms, ImageOps
+    try:
+        img = Image.open(path_or_buffer)
+    except Exception as exc:
+        raise IOError(f'Görüntü okunamadı / cannot read image: {path_or_buffer}') from exc
+    img = ImageOps.exif_transpose(img)
+    icc = img.info.get('icc_profile')
+    desc, converted = None, False
+    if icc:
+        try:
+            src = ImageCms.ImageCmsProfile(io.BytesIO(icc))
+            desc = ImageCms.getProfileDescription(src).strip()
+        except Exception:
+            src, desc = None, 'unreadable ICC profile'
+    rgb = img.convert('RGB')
+    if to_srgb and icc and src is not None and 'srgb' not in (desc or '').lower():
+        rgb = ImageCms.profileToProfile(rgb, src, _srgb_profile(),
+                                        renderingIntent=ImageCms.Intent.RELATIVE_COLORIMETRIC,
+                                        outputMode='RGB')
+        converted = True
+    LAST_LOAD_INFO.clear()
+    LAST_LOAD_INFO.update(icc_profile=desc, converted_to_srgb=converted, dpi=img.info.get('dpi'),
+                          size=rgb.size)
+    return np.array(rgb)
 
 
 def make_overlay(img_rgb, mask, color=(0,255,80), alpha=0.55):
