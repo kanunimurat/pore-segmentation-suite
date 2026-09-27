@@ -1,7 +1,7 @@
 # 🪨 Pore Segmentation Suite
 
 **An interactive pore-segmentation tool for travertines (and similar natural stones).**
-Version: 1.3.2 — 2026  
+Version: 1.3.3 — 2026  
 License: MIT  |  Developer: Murat SERT, AKU
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20416896.svg)](https://doi.org/10.5281/zenodo.20416896)
@@ -20,7 +20,17 @@ Use the app directly in your browser — no Python required:
 
 ---
 
-## ✨ What's new (v1.3.2)
+## ✨ What's new (v1.3.3)
+
+- **Aging mode, mean colour**: computed from **all specimen pixels** (previously a seeded random sample of 20 000 pixels) and with the **dark background connected to the image border excluded** (scanner lid, black cloth; `color_science.specimen_mask`). Both can be switched back in the interface and in the scripts (`--sample-size`, `--no-mask`).
+- **Interpretation engine**: the direction of a significant threshold test (below / above PT or AT) is read from the location estimate of the test that was run (mean for the t-test, Hodges–Lehmann pseudo-median for the Wilcoxon test), no longer from the arithmetic mean.
+- **Stone palettes in sRGB**: the four palettes (KT, GT, NT, PT) had been sampled from scans in their native *Generic RGB* encoding, whereas images are converted to sRGB on loading since v1.3.1. The palette colours are now converted with the same transform (original values kept as `rgb_scanner`).
+- **Reliability badge removed**: the porosity-regime badge quoted calibration errors (MAE 0.59 / 1.24 / 4.07 pp) of the per-condition calibrated threshold workflow of a companion study (stone- and salt-specific calibration against EN 1936 open porosity), which do not apply to the uncalibrated algorithms of the interface; it is replaced by a neutral note on resolution and unknown accuracy.
+- **Accuracy statistics**: `reproduce/summarize_accuracy.py` (pooled statistics, all-pairs Holm, leave-one-crop-out, trivial dark-percentile baselines, constant porosity predictor, human ceiling with bootstrap CIs); `evaluate_ground_truth.py --dark-baselines`; variance-share sensitivity in `make_figures.py fig6`.
+- **Colorimeter-like protocol**: `reproduce/emulate_spot_colorimetry.py` reads a 3 × 3 grid of 8 mm spots on the aging scans, for comparison with contact-colorimeter readings.
+- **`requirements-lock.txt`**: exact versions of the reference platform. **156 automated tests**.
+
+### v1.3.2 — metric-specific thresholds in the aging chart
 
 - **Aging chart**: the ΔE bar chart and swatches use the thresholds of the selected metric (ΔE-2000: PT 0.8 / AT 1.8, Paravina et al. 2015; ΔE-76: Mokrzycki & Tatol 2011; ΔE-94: none), consistent with the interpretation engine.
 
@@ -49,7 +59,7 @@ Use the app directly in your browser — no Python required:
 
 ```bash
 pip install -r requirements.txt -r requirements-test.txt
-python -m pytest            # 137 tests
+python -m pytest            # 156 tests (six run only on macOS)
 ```
 
 | Script | Regenerates |
@@ -60,9 +70,11 @@ python -m pytest            # 137 tests
 | `reproduce/reproduce_dataset_matrix.py ROOT` | Supplementary Table S1 (96 specimen pairs) |
 | `reproduce/run_foundation_models.py IMAGES --sam-weights sam2_b.pt` | SAM 2 / Cellpose runs (porosity, pore count, time) |
 | `reproduce/select_gt_crops.py` / `reproduce/evaluate_ground_truth.py` | Annotation crops and Supplementary Table S3 (accuracy against manual annotation) |
+| `reproduce/emulate_spot_colorimetry.py ROOT` | Supplementary Note S1: colorimeter-like spot protocol (3 × 3 grid of 8 mm spots) on the aging scans |
+| `reproduce/summarize_accuracy.py` | Section 3.3 and Supplementary Note S3: pooled accuracy statistics, baselines, human ceiling, ranking agreement between annotators |
 | `reproduce/crop_specimen.py` | Specimen cropping and export at a common pixel size (tuff and basalt, Supplementary Note S4) |
 
-Library versions matter: MSER output differs between OpenCV 4.x and 5.x, so `requirements.txt` pins OpenCV < 5. With pinned versions the results are identical between runs; across CPU architectures only the MSER-based methods (MSER, MSER+Color) differ slightly (≤ 0.24 percentage points of porosity between Apple silicon and x86-64).
+Library versions matter: MSER output differs between OpenCV 4.x and 5.x, so `requirements.txt` restricts OpenCV to < 5, and `requirements-lock.txt` pins the exact versions of the reference platform (Ubuntu 22.04, aarch64, Python 3.10.12). With pinned versions the results are identical between runs; across CPU architectures only the MSER-based methods (MSER, MSER+Color) differ slightly (≤ 0.24 percentage points of porosity between Apple silicon and x86-64).
 
 ---
 
@@ -125,12 +137,11 @@ xattr -dr com.apple.quarantine "Gözenek Tespit.app"
 - **Watershed (Marker-Controlled)** — Separates touching pores
 
 ### 🟣 Color & Clustering Based
-- **Color Distance** — Color-palette based
+- **Color Distance** — a pixel is marked as pore when its Euclidean distance in CIELAB (OpenCV 8-bit Lab) to the nearest pore colour of the palette is below 25 (default); the pore colours are the palette entries flagged in `pore_candidate_indices` (the two darkest of seven for the bundled palettes)
 - **GMM** — Gaussian Mixture Model (probabilistic)
 
 ### 🤝 Hybrid
-- **DoG + Color Filter**
-- **MSER + Color Filter**
+- **DoG + Color Filter**, **MSER + Color Filter** — the DoG or MSER mask intersected with the Color Distance mask
 
 ### 🚀 Modern Deep Learning (optional)
 - **SAM 2** (Segment Anything Model 2, Meta 2024) — default *prompted* mode: classical candidates → SAM 2 outlines
@@ -146,8 +157,9 @@ pip3 install -r requirements-modern.txt
 
 ## 🎨 Color Palette System
 
-**7 dominant colors** per stone (K-means clustering):
-- Auto-load: `palettes/{KT,GT,NT,PT}.json`
+**7 dominant colors** per stone (K-means clustering of scanned specimens):
+- Auto-load: `palettes/{KT,GT,NT,PT}.json` (sRGB since v1.3.3; the values sampled from the scans in their native *Generic RGB* encoding are kept as `rgb_scanner`)
+- The bundled palettes describe the four travertines of the paper; for other stones compute a new palette. Palette-based detection is best used as a colour prior (e.g. in the hybrid methods), not as a stand-alone detector.
 - Compute a new K-means palette from the image (one click)
 - Pixel-click color picker ("Add the color at this point to the pore list")
 - Mark each color as pore/matrix (checkbox)
@@ -234,7 +246,7 @@ pore-segmentation-suite/
 If you use this tool, please cite the software (the concept DOI always resolves to the latest version):
 
 Sert, M. (2026). Pore Segmentation Suite: an open-source, interactive, multi-method tool
-for pore segmentation and colour characterization (v1.3.2) [Computer software]. Zenodo.
+for pore segmentation and colour characterization (v1.3.3) [Computer software]. Zenodo.
 https://doi.org/10.5281/zenodo.20416896
 
 Software paper: Sert, M. Pore Segmentation Suite: an open-source, interactive, multi-method tool

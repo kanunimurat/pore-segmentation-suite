@@ -5,78 +5,122 @@
   "colors": [
     {
       "rgb": [
+        106,
+        104,
+        93
+      ],
+      "hex": "#6a685d",
+      "fraction_pct": 10.94,
+      "brightness": 101.0,
+      "rgb_scanner": [
         87,
         85,
         75
       ],
-      "hex": "#57554b",
-      "fraction_pct": 10.94,
-      "brightness": 82.33333333333333
+      "hex_scanner": "#57554b"
     },
     {
       "rgb": [
+        155,
+        137,
+        116
+      ],
+      "hex": "#9b8974",
+      "fraction_pct": 7.81,
+      "brightness": 136.0,
+      "rgb_scanner": [
         137,
         118,
         97
       ],
-      "hex": "#897661",
-      "fraction_pct": 7.81,
-      "brightness": 117.33333333333333
+      "hex_scanner": "#897661"
     },
     {
       "rgb": [
+        147,
+        142,
+        134
+      ],
+      "hex": "#938e86",
+      "fraction_pct": 9.38,
+      "brightness": 141.0,
+      "rgb_scanner": [
         129,
         124,
         115
       ],
-      "hex": "#817c73",
-      "fraction_pct": 9.38,
-      "brightness": 122.66666666666667
+      "hex_scanner": "#817c73"
     },
     {
       "rgb": [
+        180,
+        172,
+        161
+      ],
+      "hex": "#b4aca1",
+      "fraction_pct": 25.0,
+      "brightness": 171.0,
+      "rgb_scanner": [
         165,
         156,
         144
       ],
-      "hex": "#a59c90",
-      "fraction_pct": 25.0,
-      "brightness": 155.0
+      "hex_scanner": "#a59c90"
     },
     {
       "rgb": [
+        192,
+        173,
+        151
+      ],
+      "hex": "#c0ad97",
+      "fraction_pct": 7.81,
+      "brightness": 172.0,
+      "rgb_scanner": [
         178,
         157,
         133
       ],
-      "hex": "#b29d85",
-      "fraction_pct": 7.81,
-      "brightness": 156.0
+      "hex_scanner": "#b29d85"
     },
     {
       "rgb": [
+        207,
+        198,
+        188
+      ],
+      "hex": "#cfc6bc",
+      "fraction_pct": 25.0,
+      "brightness": 197.66666666666666,
+      "rgb_scanner": [
         196,
         186,
         174
       ],
-      "hex": "#c4baae",
-      "fraction_pct": 25.0,
-      "brightness": 185.33333333333334
+      "hex_scanner": "#c4baae"
     },
     {
       "rgb": [
+        228,
+        221,
+        212
+      ],
+      "hex": "#e4ddd4",
+      "fraction_pct": 14.06,
+      "brightness": 220.33333333333334,
+      "rgb_scanner": [
         221,
         213,
         202
       ],
-      "hex": "#ddd5ca",
-      "fraction_pct": 14.06,
-      "brightness": 212.0
+      "hex_scanner": "#ddd5ca"
     }
   ],
   "source": "imagecolorpicker-style K-means analysis (colors.xlsx)",
   "pore_candidate_indices": [
     0,
     1
-  ]
+  ],
+  "color_space": "sRGB",
+  "color_management": "v1.3.3: colours converted from the scanner encoding (Generic RGB Profile, as embedded in the source scans) to sRGB with relative colorimetric intent, i.e. the same transform that modules.utils.load_image applies to images since v1.3.1. The original values are kept as rgb_scanner / hex_scanner."
 }

@@ -48,6 +48,10 @@ def main():
     ap.add_argument("--prefix", default="", help="file-name prefix filter, e.g. NT-D")
     ap.add_argument("--thresholds", type=float, nargs="*", default=[0.8, 1.8])
     ap.add_argument("--out", default="results")
+    ap.add_argument("--sample-size", type=int, default=None,
+                    help="random pixel sample per image (default: all specimen pixels; v1.3.2 used 20000)")
+    ap.add_argument("--no-mask", action="store_true",
+                    help="do not exclude the dark border-connected background (v1.3.2 behaviour)")
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
 
@@ -62,7 +66,8 @@ def main():
     for p_pre, p_post in pairs:
         name = os.path.basename(p_pre).split("_")[0]
         r = aa.compute_pair_color_change(utils.load_image(p_pre), utils.load_image(p_post),
-                                         "2000", sample_name=name)
+                                         "2000", sample_name=name,
+                                         sample_size=args.sample_size, mask_background=not args.no_mask)
         r["dE00_legacy"] = round(legacy_delta_e(r), 2)
         r["dEab"] = round(cs.delta_e_lab((r["pre_L"], r["pre_a"], r["pre_b"]),
                                          (r["post_L"], r["post_a"], r["post_b"]), "76"), 2)
@@ -81,15 +86,16 @@ def main():
     summary["dE00_median"] = round(float(np.median(de)), 3)
     summary["dE00_shapiro_p"] = round(float(stats.shapiro(de).pvalue), 4)
     for thr in args.thresholds:
-        test, stat, p = aa._one_sample_vs(list(de), de.mean(), de.std(ddof=1), n, thr)
-        summary["threshold_tests"].append(dict(threshold=thr, test=test, statistic=stat,
+        test, stat, p, loc = aa._one_sample_vs(list(de), de.mean(), de.std(ddof=1), n, thr)
+        summary["threshold_tests"].append(dict(threshold=thr, test=test, statistic=stat, location=round(float(loc), 3),
                                                p_two_sided=round(float(p), 4),
                                                n_at_or_above=int((de >= thr).sum())))
     agg = aa.aggregate_pairs(rows)
     summary["auto_interpretation"] = aa.auto_interpret(agg, summary["paired_L"])["paper_ready_en"]
     print(json.dumps(summary, indent=2))
 
-    keys = ["sample_name", "pre_L", "pre_a", "pre_b", "post_L", "post_a", "post_b",
+    keys = ["sample_name", "pre_background_fraction", "post_background_fraction",
+            "pre_L", "pre_a", "pre_b", "post_L", "post_a", "post_b",
             "delta_L", "delta_a", "delta_b", "delta_C", "delta_H", "delta_e", "dE00_legacy", "dEab"]
     tag = args.prefix or "aging"
     with open(os.path.join(args.out, f"{tag}_pairs.csv"), "w", newline="", encoding="utf-8") as fh:

@@ -280,7 +280,7 @@ TRANSLATIONS = {
     'mode_pore_banner': {'tr': '🔬 Gözenek Analizi Modu', 'en': '🔬 Pore Segmentation Mode'},
     'mode_palette_banner': {'tr': '🎨 Renk Paleti Modu', 'en': '🎨 Color Palette Mode'},
     'mode_aging_banner': {'tr': '🔄 Yaşlandırma Analizi Modu', 'en': '🔄 Aging Analysis Mode'},
-    'footer_text': {'tr': 'Gözenek ve Renk Tespit Aracı v1.3.2 — 2026  |  Dr. Murat SERT — Afyon Kocatepe Üniversitesi', 'en': 'Pore and Color Segmentation Suite v1.3.2 — 2026  |  Murat SERT (Ph.D) — Afyon Kocatepe University'},
+    'footer_text': {'tr': 'Gözenek ve Renk Tespit Aracı v1.3.3 — 2026  |  Dr. Murat SERT — Afyon Kocatepe Üniversitesi', 'en': 'Pore and Color Segmentation Suite v1.3.3 — 2026  |  Murat SERT (Ph.D) — Afyon Kocatepe University'},
     'dominant_colors_label': {'tr': 'dominant renk', 'en': 'dominant colors'},
 
     # ---- Phase 6 additions (Aging Analysis i18n) ----
@@ -335,7 +335,10 @@ TRANSLATIONS = {
     'analysis_depth_label': {'tr': 'Analiz Derinliği', 'en': 'Analysis Depth'},
     'depth_standard': {'tr': '📊 Standart (mean color + ΔE + istatistik)', 'en': '📊 Standard (mean color + ΔE + statistics)'},
     'depth_detailed': {'tr': '🔬 Detaylı (+ uniformity karşılaştırması)', 'en': '🔬 Detailed (+ uniformity comparison)'},
-    'pixel_sample_size': {'tr': 'Pixel örnekleme boyutu', 'en': 'Pixel sample size'},
+    'pixel_sample_size': {'tr': 'Piksel örnekleme (varsayılan: tüm numune pikselleri)', 'en': 'Pixel sampling (default: all specimen pixels)'},
+    'all_pixels': {'tr': 'Tümü', 'en': 'All'},
+    'mask_bg_label': {'tr': 'Koyu arka planı dışla (kenara bağlı)', 'en': 'Exclude dark background (border-connected)'},
+    'mask_bg_help': {'tr': 'Görüntü kenarına bağlı koyu bölgeleri (tarayıcı kapağı, siyah kumaş) renk ortalamasından çıkarır.', 'en': 'Removes dark regions connected to the image border (scanner lid, black cloth) from the colour mean.'},
     'estimated_time_template': {'tr': '⏱️ Tahmini süre: ~{secs:.0f}s ({n} numune)', 'en': '⏱️ Estimated time: ~{secs:.0f}s ({n} samples)'},
     'download_options': {'tr': '##### İndirme Seçenekleri', 'en': '##### Download Options'},
     'btn_per_pair_csv': {'tr': 'Per-pair CSV', 'en': 'Per-pair CSV'},
@@ -855,18 +858,14 @@ TRANSLATIONS.update({
 })
 
 
-# Güvenilirlik rozeti (gözeneklilik rejimi) — boundary-condition bulgusu
+# v1.3.3: the porosity-regime "reliability" badge (with calibration MAE values
+# 0.59 / 1.24 / 4.07 pp of the per-condition calibrated workflow of a companion
+# study, not valid for the uncalibrated algorithms of the interface) was removed; it is
+# replaced by a neutral interpretation note that makes no accuracy claim.
 TRANSLATIONS.update({
- 'rel_title':    {'tr': 'Güvenilirlik', 'en': 'Reliability'},
- 'rel_low':      {'tr': 'Güvenilir', 'en': 'Reliable'},
- 'rel_mid':      {'tr': 'Tutarlı', 'en': 'Consistent'},
- 'rel_high':     {'tr': 'Temkinli', 'en': 'Caution'},
- 'rel_low_msg':  {'tr': 'Düşük gözeneklilik rejimi (<%2). Yöntem bu aralıkta en güvenilirdir (kalibrasyon MAE ≈ 0,59 puan).',
-                  'en': 'Low-porosity regime (<2%). The method is most reliable in this range (calibration MAE ≈ 0.59 pp).'},
- 'rel_mid_msg':  {'tr': 'Orta gözeneklilik rejimi (%2–8). Tutarlı sonuç beklenir (kalibrasyon MAE ≈ 1,24 puan).',
-                  'en': 'Mid-porosity regime (2–8%). Consistent results are expected (calibration MAE ≈ 1.24 pp).'},
- 'rel_high_msg': {'tr': 'Yüksek gözeneklilik rejimi (>%8). Sonuç temkinli yorumlanmalı: kalibrasyon hatası belirgin artar (MAE ≈ 4,07 puan) ve bu aralık az sayıda numuneye dayanır.',
-                  'en': 'High-porosity regime (>8%). Interpret with caution: calibration error rises sharply (MAE ≈ 4.07 pp) and this range rests on few samples.'},
+ 'rel_title':    {'tr': 'Yorum notu', 'en': 'Interpretation note'},
+ 'rel_note_msg': {'tr': 'Görüntüden ölçülen gözeneklilik algoritmaya ve çözünürlüğe bağlıdır; yaklaşık 2 pikselden ({res:.2f} mm) küçük gözenekler çözümlenemez. Sayısal doğruluk bu görüntü için bilinmez; mümkünse EN 1936 açık gözenekliliği veya elle işaretlenmiş bir kırpıntı ile karşılaştırın.',
+                  'en': 'Image-based porosity depends on the algorithm and the resolution; pores smaller than about 2 pixels ({res:.2f} mm) are not resolved. The numerical accuracy for this image is unknown; where possible compare with the EN 1936 open porosity or with a manually annotated crop.'},
 })
 
 

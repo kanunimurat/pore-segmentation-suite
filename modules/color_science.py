@@ -248,10 +248,42 @@ def enrich_palette_with_lab(palette):
 # COLOR UNIFORMITY ANALYSIS (Seviye 4)
 # ============================================================
 
-def compute_uniformity(img_rgb, sample_size=20000, delta_e_sample=2000):
+def specimen_mask(img_rgb, bg_threshold=35, dilate=2):
+    """
+    v1.3.3: separate the specimen from the scanner background.
+
+    Specimens are scanned face-down under a black cloth, so wherever the
+    specimen does not fill the image (chipped or broken edges after salt
+    weathering) the near-black cloth enters the frame. Background = dark pixels
+    (grey level < bg_threshold) that are connected to the image border,
+    widened by `dilate` pixels to remove the anti-aliased edge. Dark pores
+    inside the specimen are not connected to the border and are kept.
+    Returns a boolean mask (True = specimen).
+    """
+    from scipy import ndimage as ndi
+    gray = np.asarray(img_rgb, dtype=np.float64)[..., :3].mean(axis=2)
+    dark = gray < bg_threshold
+    lab, n = ndi.label(dark)
+    if n == 0:
+        return np.ones(gray.shape, dtype=bool)
+    border = np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))
+    border = border[border > 0]
+    background = np.isin(lab, border)
+    if dilate and background.any():
+        background = ndi.binary_dilation(background, iterations=int(dilate))
+    return ~background
+
+
+def compute_uniformity(img_rgb, sample_size=None, delta_e_sample=2000, mask_background=True):
     """
     Görüntünün CIE Lab uzayındaki renk homojenliğini ölçer.
-    
+
+    v1.3.3: the mean colour is computed from ALL specimen pixels (sample_size=None,
+    default) after the scanner background has been removed with specimen_mask();
+    up to v1.3.2 it was computed from a fixed-seed random sample of 20 000 pixels
+    of the whole frame, background included. `sample_size` is kept as an optional
+    speed setting of the interface.
+
     Returns dict:
       mean_L/a/b      : Ortalama Lab değerleri
       std_L/a/b       : Per-channel standart sapma  
@@ -261,6 +293,7 @@ def compute_uniformity(img_rgb, sample_size=20000, delta_e_sample=2000):
       homogeneity_score : 0-10 (10 = mükemmel homojen)
       uniformity_class : kategorik etiket
       n_pixels_sampled : İstatistik için kullanılan piksel sayısı
+      background_fraction : maskelenen arka plan oranı (0-1)
     
     Bilimsel önem:
       - Taş kalite kontrolü için sayısal indeks
@@ -268,11 +301,23 @@ def compute_uniformity(img_rgb, sample_size=20000, delta_e_sample=2000):
       - Cross-batch tutarlılık ölçütü
     """
     H, W = img_rgb.shape[:2]
-    pixels = img_rgb.reshape(-1, 3)
-    n = min(sample_size, len(pixels))
+    rgb = np.asarray(img_rgb)[..., :3]
+    if mask_background:
+        m = specimen_mask(rgb)
+        pixels = rgb[m]
+        background_fraction = float(1.0 - m.mean())
+    else:
+        pixels = rgb.reshape(-1, 3)
+        background_fraction = 0.0
+    if len(pixels) == 0:
+        pixels = rgb.reshape(-1, 3)
     rng = np.random.RandomState(42)
-    idx = rng.choice(len(pixels), size=n, replace=False)
-    sample = pixels[idx]
+    if sample_size is not None and sample_size < len(pixels):
+        idx = rng.choice(len(pixels), size=int(sample_size), replace=False)
+        sample = pixels[idx]
+    else:
+        sample = pixels
+    n = len(sample)
     
     # RGB → Lab (skimage, gerçek CIE)
     sample_norm = sample.astype(np.float64) / 255.0
@@ -328,6 +373,7 @@ def compute_uniformity(img_rgb, sample_size=20000, delta_e_sample=2000):
         'homogeneity_score_0_10': round(homogeneity_score, 2),
         'uniformity_class': u_class,
         'n_pixels_sampled': n,
+        'background_fraction': round(background_fraction, 5),
         'mean_color_rgb': skcolor.lab2rgb(mean_color).reshape(3).tolist(),
         'mean_color_hex': '#{:02x}{:02x}{:02x}'.format(
             *[int(np.clip(c*255, 0, 255)) for c in skcolor.lab2rgb(mean_color).reshape(3)]),

@@ -208,6 +208,23 @@ def run_algorithms(image_path, palette_code):
     return out
 
 
+def dark_baselines(image_path, qs):
+    """Trivial reference detectors (v1.3.3): the darkest q % of the full image
+    (OpenCV grey, the same grey the classical algorithms use), no post-filter.
+    A method that does not beat these adds nothing beyond 'dark = pore'."""
+    import cv2
+    from modules import utils
+    out = {}
+    if not qs:
+        return out
+    gray = cv2.cvtColor(utils.load_image(image_path), cv2.COLOR_RGB2GRAY)
+    order = np.argsort(gray.ravel(), kind="stable")      # exact q % (ties broken by position)
+    for q in qs:
+        m = np.zeros(gray.size, bool)
+        m[order[:int(round(gray.size * q / 100.0))]] = True
+        out[f"Dark-{q:g}%"] = m.reshape(gray.shape)
+    return out
+
 
 def load_mask(path):
     return np.asarray(Image.open(path).convert("L")) > 127
@@ -225,6 +242,9 @@ def main():
     ap.add_argument("--tolerance", type=int, default=1)
     ap.add_argument("--min-area", type=int, default=8)
     ap.add_argument("--save-crop-masks", action="store_true")
+    ap.add_argument("--dark-baselines", type=float, nargs="*", default=[1, 2, 3],
+                    help="trivial baselines (v1.3.3): mark the darkest q%% of the full grey image as pore, "
+                         "no post-filter; one method 'Dark-q%%' per value (pass none to disable)")
     ap.add_argument("--out", default="gt/results")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
@@ -251,6 +271,7 @@ def main():
         stem = os.path.splitext(c["image"])[0]
         if stem not in cache:
             cache[stem] = run_algorithms(img_path, c["group"])
+            cache[stem].update(dark_baselines(img_path, a.dark_baselines))
             for d in a.extra_masks:
                 for p in sorted(glob.glob(os.path.join(d, f"{stem}_*_mask.png"))):
                     meth = os.path.basename(p)[len(stem) + 1:-len("_mask.png")]

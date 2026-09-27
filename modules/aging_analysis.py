@@ -33,9 +33,13 @@ def pair_manual(pre_items, post_items, manual_map):
 # PAIR-WISE COLOR CHANGE
 # ============================================================
 def compute_pair_color_change(img_pre, img_post, delta_e_method='2000',
-                                sample_size=20000, sample_name=''):
-    u_pre = _cs.compute_uniformity(img_pre, sample_size=sample_size)
-    u_post = _cs.compute_uniformity(img_post, sample_size=sample_size)
+                                sample_size=None, sample_name='', mask_background=True):
+    # v1.3.3: by default every specimen pixel is used (sample_size=None) and
+    # the dark background connected to the image border (scanner lid, cloth)
+    # is excluded (color_science.specimen_mask). Up to v1.3.2 a random sample
+    # of 20,000 pixels of the whole frame, background included, was used.
+    u_pre = _cs.compute_uniformity(img_pre, sample_size=sample_size, mask_background=mask_background)
+    u_post = _cs.compute_uniformity(img_post, sample_size=sample_size, mask_background=mask_background)
     
     delta_L = u_post['mean_L'] - u_pre['mean_L']
     delta_a = u_post['mean_a'] - u_pre['mean_a']
@@ -57,7 +61,7 @@ def compute_pair_color_change(img_pre, img_post, delta_e_method='2000',
     # CIELAB coordinates. Up to v1.2.x the mean Lab colour was converted back
     # to 8-bit sRGB (truncated with int()) and then re-converted to Lab before
     # the formula was applied; that round-trip introduced a quantisation error
-    # of up to ~0.25 dE00 units and made dE inconsistent with the reported
+    # of up to 0.40 dE00 units on the 96 pairs of the paper (95th percentile 0.24) and made dE inconsistent with the reported
     # dL*, da*, db* (see tests/test_aging_analysis.py).
     delta_e_value = _cs.delta_e_lab(
         (u_pre['mean_L'], u_pre['mean_a'], u_pre['mean_b']),
@@ -66,6 +70,8 @@ def compute_pair_color_change(img_pre, img_post, delta_e_method='2000',
     
     return {
         'sample_name': sample_name,
+        'pre_background_fraction': u_pre.get('background_fraction', 0.0),
+        'post_background_fraction': u_post.get('background_fraction', 0.0),
         'pre_color_hex': u_pre['mean_color_hex'],
         'post_color_hex': u_post['mean_color_hex'],
         'pre_L': round(u_pre['mean_L'], 2),
@@ -280,16 +286,21 @@ def _one_sample_vs(values, mean, sd, n, ref, alpha=0.05):
         normal = bool(stats.shapiro(d).pvalue > alpha) if np.ptp(d) > 0 else False
         if normal:
             r = stats.ttest_1samp(d, 0)
-            return 'one-sample t-test', float(r.statistic), float(r.pvalue)
+            return 'one-sample t-test', float(r.statistic), float(r.pvalue), float(np.mean(d) + ref)
+        # v1.3.3: the location estimate that matches the Wilcoxon test is the
+        # Hodges-Lehmann pseudo-median (median of the Walsh averages); the
+        # direction of a significant result is read from it, not from the mean.
+        ii, jj = np.triu_indices(len(d))
+        hl = float(np.median((d[ii] + d[jj]) / 2.0) + ref)
         try:
             r = stats.wilcoxon(d)
-            return 'Wilcoxon signed-rank test', float(r.statistic), float(r.pvalue)
+            return 'Wilcoxon signed-rank test', float(r.statistic), float(r.pvalue), hl
         except ValueError:
-            return 'Wilcoxon signed-rank test', None, 1.0
+            return 'Wilcoxon signed-rank test', None, 1.0, hl
     if n < 2 or sd <= 0:
-        return None, None, None
+        return None, None, None, None
     t = (mean - ref) / (sd / math.sqrt(n))
-    return 'one-sample t-test', float(t), float(2 * stats.t.sf(abs(t), n - 1))
+    return 'one-sample t-test', float(t), float(2 * stats.t.sf(abs(t), n - 1)), float(mean)
 
 
 def auto_interpret(aggregate, stat_test=None, pt=None, at=None, alpha=0.05):
@@ -334,19 +345,21 @@ def auto_interpret(aggregate, stat_test=None, pt=None, at=None, alpha=0.05):
         PT = _cs.DE2000_THRESHOLDS['PT'] if pt is None else float(pt)
         AT = _cs.DE2000_THRESHOLDS['AT'] if at is None else float(at)
         for name, ref in (('PT', PT), ('AT', AT)):
-            test, stat, p = _one_sample_vs(values, de_mean, de_std, n, ref, alpha)
+            test, stat, p, loc = _one_sample_vs(values, de_mean, de_std, n, ref, alpha)
             n_above = int(sum(v >= ref for v in values)) if values else None
             threshold_tests.append({'threshold': name, 'value': ref, 'test': test, 'statistic': stat,
-                                    'p_two_sided': p, 'n_at_or_above': n_above})
+                                    'p_two_sided': p, 'location': loc, 'n_at_or_above': n_above})
 
         def locate(tt, name_en, name_tr):
             ref, p = tt['value'], tt['p_two_sided']
             if p is None:
                 return ('', '')
             tag = f" ({tt['test']}, " + ("p < 0.001" if p < 0.001 else f"p = {p:.3f}") + ")"
-            if p < alpha and de_mean < ref:
+            loc = tt.get('location', de_mean)
+            loc = de_mean if loc is None else loc
+            if p < alpha and loc < ref:
                 return (f"below the {name_en} ({ref:g}){tag}", f"{name_tr} ({ref:g}) altında{tag}")
-            if p < alpha and de_mean > ref:
+            if p < alpha and loc > ref:
                 return (f"above the {name_en} ({ref:g}){tag}", f"{name_tr} ({ref:g}) üzerinde{tag}")
             return (f"statistically indistinguishable from the {name_en} ({ref:g}){tag}",
                     f"{name_tr} ({ref:g}) ile istatistiksel olarak ayırt edilemez{tag}")
@@ -380,7 +393,14 @@ def auto_interpret(aggregate, stat_test=None, pt=None, at=None, alpha=0.05):
                   f"{ci_tr} (medyan {de['median']:.2f}, aralık: {de_min:.2f}-{de_max:.2f}) renk değişimi gösterdi.")
     eng = (f"After aging, the {n} specimens exhibited a mean total colour difference of {label} = "
            f"{de_mean:.2f} +/- {de_std:.2f}{ci_en} (median {de['median']:.2f}, range {de_min:.2f}-{de_max:.2f}).")
-    if scheme_en:
+    if scheme_en and threshold_tests and any(t.get('p_two_sided') is not None for t in threshold_tests):
+        # v1.3.3: with threshold tests available, the class of the mean is only descriptive;
+        # the position relative to the thresholds is stated by the tests that follow.
+        summary_tr += (f" Ortalama değer betimsel olarak {scheme_tr} göre '{cls_tr}' sınıfına düşmektedir; "
+                       f"eşiklere göre konum aşağıdaki testlerle değerlendirilmiştir.")
+        eng += (f" Descriptively, the mean value lies in the class '{cls_en}' of the {scheme_en}; "
+                f"its position relative to the thresholds is assessed by the tests below.")
+    elif scheme_en:
         summary_tr += f" Bu değer {scheme_tr} göre '{cls_tr}' sınıfındadır."
         eng += f" According to the {scheme_en}, the mean falls in the class '{cls_en}'."
     else:

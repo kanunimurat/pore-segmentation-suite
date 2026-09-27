@@ -2,6 +2,27 @@
 
 Sürüm geçmişi — [Semantic Versioning](https://semver.org/lang/tr/).
 
+## [1.3.3] — 2026-09-27 — Specimen masking, palettes in sRGB, accuracy statistics
+
+### Fixed
+- **Aging mean colour** (`color_science.compute_uniformity`, `aging_analysis.compute_pair_color_change`): the mean CIELAB colour is now computed from all specimen pixels instead of a seeded random sample of 20 000 pixels, and the dark background connected to the image border (scanner lid, black cloth) is excluded by the new `color_science.specimen_mask`. The fraction of excluded pixels is reported (`pre_background_fraction`, `post_background_fraction`). The previous behaviour is available with `sample_size=20000, mask_background=False` (interface: sampling slider and mask checkbox; scripts: `--sample-size`, `--no-mask`).
+- **Interpretation engine** (`aging_analysis.auto_interpret`): the direction of a significant test against PT or AT is taken from the location estimate of the test actually used (mean for the one-sample t-test, Hodges–Lehmann pseudo-median for the Wilcoxon signed-rank test). Up to v1.3.2 it was taken from the arithmetic mean, which could state the opposite direction for skewed data. `_one_sample_vs` now also returns this location.
+- **Stone palettes** (`palettes/*.json`): the colours had been sampled from the scans in their native *Generic RGB* encoding, while images are converted to sRGB on loading since v1.3.1, so palette and image colours were in different encodings. The palette colours are converted with the same transform (relative colorimetric); the original values are kept as `rgb_scanner` / `hex_scanner`. On the twelve benchmark images the Color-Distance masks of v1.3.3 agree with those of raw images and raw palettes (Dice 0.82–0.98; v1.3.2: 0.44–0.82).
+
+- **Interpretation paragraph**: when threshold tests are available, the perceptual class of the mean is now stated as descriptive, and the position relative to the thresholds is left to the tests (previously the paragraph named the class of the mean as if it were established).
+- **Documentation**: the v1.3.0 entry understated the 8-bit quantization error of v1.2.x; on the 96 specimen pairs of the SoftwareX paper it reaches 0.40 ΔE-2000 units (95th percentile 0.24).
+
+### Removed
+- **Reliability badge** of the Pore mode: it quoted calibration errors (MAE 0.59 / 1.24 / 4.07 pp for porosity below 2 %, 2–8 % and above 8 %) taken from the per-condition calibrated threshold workflow of a companion study (a threshold calibrated for each stone–salt pair against EN 1936 open porosity). These values do not apply to the uncalibrated algorithms of the interface, to which the badge was attached, and the accuracy evaluation of the SoftwareX paper does not support them for those algorithms. It is replaced by a neutral note (resolution limit of about two pixels; accuracy unknown for the image at hand).
+
+### Added
+- `reproduce/summarize_accuracy.py`: pooled accuracy statistics over crops — bootstrap CIs, Friedman + Kendall W, Holm-corrected Wilcoxon against the best method and over all pairs, leave-one-crop-out stability, trivial baselines, a constant porosity predictor (leave-one-out mean of the other crops), Spearman tracking of porosity, human ceiling with paired bootstrap CIs, ranking agreement between two reference annotators.
+- `reproduce/evaluate_ground_truth.py --dark-baselines 1 2 3`: trivial detectors marking the darkest q % of the grey image.
+- `reproduce/make_figures.py fig6`: variance shares without the palette methods, leave-one-method-out range and two-way bootstrap CI.
+- `reproduce/emulate_spot_colorimetry.py`: emulates a contact-colorimeter protocol on the scans (3 × 3 grid of 8 mm spots, mean of the local ΔE-2000) for comparison with instrument readings.
+- `requirements-lock.txt`: exact library versions of the reference platform.
+- Tests for masking, test direction, palette conversion, baselines and the summary script (156 tests; six colour-profile tests run only on macOS).
+
 ## [1.3.2] — 2026-09-27 — Metric-specific thresholds in the aging chart
 
 ### Fixed

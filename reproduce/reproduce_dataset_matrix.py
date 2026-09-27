@@ -45,6 +45,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("root")
     ap.add_argument("--out", default="results")
+    ap.add_argument("--sample-size", type=int, default=None,
+                    help="random pixel sample per image (default: all specimen pixels; v1.3.2 used 20000)")
+    ap.add_argument("--no-mask", action="store_true",
+                    help="do not exclude the dark border-connected background (v1.3.2 behaviour)")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     rows = []
@@ -59,12 +63,14 @@ def main():
                 if len(p) != 1 or len(q) != 1:
                     print("missing", sid, p, q)
                     continue
-                r = aa.compute_pair_color_change(utils.load_image(p[0]), utils.load_image(q[0]), "2000", sample_name=sid)
+                r = aa.compute_pair_color_change(utils.load_image(p[0]), utils.load_image(q[0]), "2000", sample_name=sid,
+                                         sample_size=a.sample_size, mask_background=not a.no_mask)
                 rows.append(dict(stone=sc, salt=salt, specimen=sid,
                                  pre_file=os.path.basename(p[0]), post_file=os.path.basename(q[0]),
                                  pre_L=r["pre_L"], pre_a=r["pre_a"], pre_b=r["pre_b"],
                                  post_L=r["post_L"], post_a=r["post_a"], post_b=r["post_b"],
                                  dL=r["delta_L"], da=r["delta_a"], db=r["delta_b"],
+                                 pre_bg=r["pre_background_fraction"], post_bg=r["post_background_fraction"],
                                  dE00=r["delta_e"], dE00_legacy=round(legacy_delta_e(r), 2),
                                  dEab=round(cs.delta_e_lab((r["pre_L"], r["pre_a"], r["pre_b"]),
                                                            (r["post_L"], r["post_a"], r["post_b"]), "76"), 2)))

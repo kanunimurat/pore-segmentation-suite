@@ -158,6 +158,27 @@ def fig6(args):
         fh.write("mean range by stone (pp): " + str(stone_rng.round(2).to_dict()) + "\n")
         fh.write("range by specimen (pp): " + str(rng.round(2).to_dict()) + "\n")
         fh.write("CV across specimens: " + str(cv.round(3).to_dict()) + "\n")
+        # v1.3.3: sensitivity of the variance shares (log10 scale, porosity + 0.05)
+        lw = np.log10(wide + 0.05)
+        pal = [m for m in lw.index if m in ("Color-Distance", "DoG+Color", "MSER+Color")]
+        if pal:
+            l9 = variance_shares(lw.drop(index=pal))
+            fh.write(f"variance share log10 without the {len(pal)} palette methods ({len(lw) - len(pal)} methods): "
+                     f"algorithm {l9[0]:.3f}, specimen {l9[1]:.3f}, residual {l9[2]:.3f}\n")
+        loo = np.array([variance_shares(lw.drop(index=m))[:2] for m in lw.index])
+        fh.write(f"leave-one-method-out range: algorithm {loo[:, 0].min():.3f}-{loo[:, 0].max():.3f}, "
+                 f"specimen {loo[:, 1].min():.3f}-{loo[:, 1].max():.3f}\n")
+        rng_b = np.random.default_rng(0)
+        bs = []
+        for _ in range(2000):   # resample specimens and methods (two-way bootstrap)
+            r = lw.iloc[rng_b.integers(0, lw.shape[0], lw.shape[0]), rng_b.integers(0, lw.shape[1], lw.shape[1])]
+            bs.append(variance_shares(r)[:2])
+        bs = np.array(bs)
+        fh.write("two-way bootstrap 95% CI (2000 resamples, seed 0): "
+                 f"algorithm {np.quantile(bs[:, 0], .025):.3f}-{np.quantile(bs[:, 0], .975):.3f}, "
+                 f"specimen {np.quantile(bs[:, 1], .025):.3f}-{np.quantile(bs[:, 1], .975):.3f}\n")
+        fh.write("model: additive two-way decomposition (algorithm + specimen + residual) of "
+                 "log10(porosity + 0.05), one value per algorithm x specimen cell\n")
     print(open(os.path.join(args.out, "Figure6_stats.txt")).read())
 
 
