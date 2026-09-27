@@ -2,6 +2,13 @@
 
 Sürüm geçmişi — [Semantic Versioning](https://semver.org/lang/tr/).
 
+## [1.3.2] — 2026-09-27 — Metric-specific thresholds in the aging chart
+
+### Fixed
+- **Aging results chart**: the ΔE bar chart and the colour swatches coloured and marked every metric with the ΔE-76 class boundaries 1 / 3.5 / 5 / 10, although the interpretation engine already used metric-specific thresholds since v1.3.0. They now use the same thresholds as the engine: ΔE-2000 → PT 0.8 / AT 1.8 (Paravina et al., 2015); ΔE-76 → the Mokrzycki & Tatol (2011) classes 1 / 2 / 3.5 / 5; ΔE-94 → no lines.
+- Quick-start and "Standards" texts of the Aging mode no longer state that the Mokrzycki & Tatol classification is applied to every metric.
+- Interpretation paragraph: p-values below 0.001 are written as "p < 0.001" instead of "p = 0.000".
+
 ## [1.3.1] — 2026-09-27 — Colour management and accuracy evaluation (SoftwareX revision)
 
 ### Fixed

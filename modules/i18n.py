@@ -280,7 +280,7 @@ TRANSLATIONS = {
     'mode_pore_banner': {'tr': '🔬 Gözenek Analizi Modu', 'en': '🔬 Pore Segmentation Mode'},
     'mode_palette_banner': {'tr': '🎨 Renk Paleti Modu', 'en': '🎨 Color Palette Mode'},
     'mode_aging_banner': {'tr': '🔄 Yaşlandırma Analizi Modu', 'en': '🔄 Aging Analysis Mode'},
-    'footer_text': {'tr': 'Gözenek ve Renk Tespit Aracı v1.3.1 — 2026  |  Dr. Murat SERT — Afyon Kocatepe Üniversitesi', 'en': 'Pore and Color Segmentation Suite v1.3.1 — 2026  |  Murat SERT (Ph.D) — Afyon Kocatepe University'},
+    'footer_text': {'tr': 'Gözenek ve Renk Tespit Aracı v1.3.2 — 2026  |  Dr. Murat SERT — Afyon Kocatepe Üniversitesi', 'en': 'Pore and Color Segmentation Suite v1.3.2 — 2026  |  Murat SERT (Ph.D) — Afyon Kocatepe University'},
     'dominant_colors_label': {'tr': 'dominant renk', 'en': 'dominant colors'},
 
     # ---- Phase 6 additions (Aging Analysis i18n) ----
@@ -305,7 +305,9 @@ TRANSLATIONS = {
     'col_class': {'tr': 'Sinif', 'en': 'Class'},
     'color_compare_section': {'tr': '##### Renk Karsilastirma (Pre / Post)', 'en': '##### Color Comparison (Pre / Post)'},
     'bar_chart_section': {'tr': '##### Numune x dE Bar Chart', 'en': '##### Per-sample ΔE Bar Chart'},
-    'bar_chart_caption': {'tr': 'Dikey kesikli cizgiler perceptual esiklerdir: 1=just noticeable, 3.5=barely visible, 5=clear, 10=marked', 'en': 'Dashed vertical lines mark perceptual thresholds: 1=just noticeable, 3.5=barely visible, 5=clear, 10=marked'},
+    'bar_chart_caption_2000': {'tr': 'Kesikli çizgiler CIEDE2000 %50:50 eşikleridir: PT = 0.8 (algılanabilirlik), AT = 1.8 (kabul edilebilirlik) (Paravina ve ark., 2015)', 'en': 'Dashed lines mark the CIEDE2000 50:50% thresholds: PT = 0.8 (perceptibility), AT = 1.8 (acceptability) (Paravina et al., 2015)'},
+    'bar_chart_caption_76': {'tr': 'Kesikli çizgiler ΔE-76 gözlemci sınıflarıdır (Mokrzycki & Tatol, 2011): <1 fark edilmez, 1-2 deneyimli gözlemci, 2-3.5 deneyimsiz gözlemci, 3.5-5 açık fark, >5 iki farklı renk', 'en': 'Dashed lines mark the ΔE-76 observer classes (Mokrzycki & Tatol, 2011): <1 not noticed, 1-2 experienced observer, 2-3.5 unexperienced observer, 3.5-5 clear difference, >5 two different colours'},
+    'bar_chart_caption_94': {'tr': 'ΔE-94 için doğrulanmış algı eşiği yoktur; eşik çizgisi gösterilmez', 'en': 'No validated perceptual thresholds exist for ΔE-94; no threshold lines are drawn'},
     'stat_analysis_section': {'tr': '##### Istatistiksel Analiz (Paired)', 'en': '##### Statistical Analysis (Paired)'},
     'stat_test_label': {'tr': 'Test', 'en': 'Test'},
     'stat_pvalue': {'tr': 'p-deger', 'en': 'p-value'},

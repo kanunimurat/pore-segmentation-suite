@@ -343,7 +343,7 @@ def auto_interpret(aggregate, stat_test=None, pt=None, at=None, alpha=0.05):
             ref, p = tt['value'], tt['p_two_sided']
             if p is None:
                 return ('', '')
-            tag = f" ({tt['test']}, p = {p:.3f})"
+            tag = f" ({tt['test']}, " + ("p < 0.001" if p < 0.001 else f"p = {p:.3f}") + ")"
             if p < alpha and de_mean < ref:
                 return (f"below the {name_en} ({ref:g}){tag}", f"{name_tr} ({ref:g}) altında{tag}")
             if p < alpha and de_mean > ref:

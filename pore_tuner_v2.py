@@ -148,8 +148,8 @@ _inject_global_css()  # Oğuz tarzı görsel kimlik (turuncu vurgu)
 # Çalışma ortamı: Streamlit Cloud mu, yerel mi? (Cloud'da repo /mount/src altına bağlanır)
 IS_CLOUD = os.path.abspath(__file__).startswith('/mount/src') or os.environ.get('PSS_CLOUD') == '1'
 
-_CHANGELOG_TR = "#### 🆕 v1.3.1 — Renk yönetimi ve doğruluk ölçümü\n- Gömülü renk profili (ör. Generic RGB) yüklemede sRGB'ye çevriliyor; renk tabanlı yöntemler ve ΔE görüntüyü dışa aktaran yazılıma bağlı değil\n- Piksel boyutu artık ayarlanabilir (mm cinsinden alan ve boyut çıktıları); varsayılan 0,1277 mm (örnek görüntüler)\n- Elle işaretlemeye göre doğruluk betikleri (reproduce/select_gt_crops.py, evaluate_ground_truth.py) ve numune kırpma (crop_specimen.py)\n- benchmark_algorithms.py --palette none (paletsiz taşlar için)\n- 137 otomatik test\n\n#### v1.3.0 — Doğrulama ve tekrar-üretilebilirlik\n- ΔE artık doğrudan ortalama CIELAB'dan hesaplanıyor (v1.2'deki 8-bit sRGB yuvarlama hatası giderildi)\n- Metriğe özgü algısal eşikler: ΔE-2000 → PT/AT (Paravina 2015), ΔE-76 → Mokrzycki & Tatol; ΔE, 0'a değil algılanabilirlik eşiğine karşı sınanıyor\n- SAM 2 'prompted' modu (Sauvola adayları → SAM 2 sınırları); Cellpose 4 desteği\n- Sabit yüzdelikli yöntemler (DoG, Bottom-Hat, Frangi) için uyarı\n- 120 otomatik test (pytest + GitHub Actions); reproduce/ betikleri\n\n#### v1.2.1 — Web sürümü + örnek galerisi\n- Tarayıcıdan kullanım (Streamlit Cloud — kurulum gerektirmez)\n- Gömülü gerçek traverten örnekleri: KT · NT · PT · GT (öncesi/sonrası)\n- Yaşlandırma modunda tek tıkla örnek before/after çiftleri\n- 'Gömülü örnek numune' seçici (Gözenek ve Palet modları)\n- Arayüz adı: 'Gözenek ve Renk Tespit Aracı'\n\n#### v1.2.0 — Görsel yenileme + gözenek boyut dağılımı\n- Gözenek boyut dağılımı grafiği (MIP benzeri, logaritmik eksen, D50)\n- Güvenilirlik rozeti (gözeneklilik rejimine göre uyarı: %2 altı / %2–8 / %8 üstü)\n- Tema-duyarlı (açık/koyu) grafikler; tek tık ZIP indirme\n- Sıcak turuncu görsel kimlik, daha okunaklı arayüz\n\n#### v1.1.0 — Çok dillilik + karşılaştırma\n- TR / EN dil seçimi\n- Çoklu-yöntem porozite yayılımı (aynı görüntüde algoritma bağımlılığı)\n- Karşılaştırma-kolaj oluşturucu\n\n#### v1.0.0 — İlk halka açık sürüm\n- 14 segmentasyon algoritması (klasik eşikleme, blob/bölge, renk-clustering, hibrit, modern DL: SAM 2 · CellPose)\n- 4 traverten için ön-yüklü renk paletleri (KT, GT, NT, PT)\n- 5 yanlış-pozitif filtresi; preset kaydet/yükle; K-means palet; piksel renk seçici; CSV/PNG çıktı"
-_CHANGELOG_EN = "#### 🆕 v1.3.1 — Colour management and accuracy evaluation\n- Embedded colour profiles (e.g. Generic RGB) are converted to sRGB on loading, so colour-based methods and ΔE no longer depend on the software that exported the image\n- Adjustable pixel size (mm-based areas and sizes); default 0.1277 mm (bundled samples)\n- Accuracy scripts against manual annotation (reproduce/select_gt_crops.py, evaluate_ground_truth.py) and specimen cropping (crop_specimen.py)\n- benchmark_algorithms.py --palette none (stones without a palette)\n- 137 automated tests\n\n#### v1.3.0 — Validation and reproducibility\n- ΔE is now computed directly from the mean CIELAB (8-bit sRGB rounding error of v1.2 removed)\n- Metric-specific perceptual thresholds: ΔE-2000 → PT/AT (Paravina 2015), ΔE-76 → Mokrzycki & Tatol; ΔE tested against the perceptibility threshold, not against 0\n- SAM 2 'prompted' mode (Sauvola candidates → SAM 2 outlines); Cellpose 4 support\n- Warning for fixed-percentile detectors (DoG, Bottom-Hat, Frangi)\n- 120 automated tests (pytest + GitHub Actions); reproduce/ scripts\n\n#### v1.2.1 — Web release + sample gallery\n- Runs in the browser (Streamlit Cloud — no installation)\n- Bundled real travertine samples: KT · NT · PT · GT (before/after)\n- One-click sample before/after pairs in Aging mode\n- 'Built-in sample' picker (Pore & Palette modes)\n- Interface renamed to 'Pore & Color Detection Tool'\n\n#### v1.2.0 — Visual refresh + pore-size distribution\n- Pore-size distribution chart (MIP-like, log axis, D50)\n- Reliability badge (porosity-regime warning: <2% / 2–8% / >8%)\n- Theme-aware (light/dark) charts; one-click ZIP download\n- Warm orange visual identity, more readable interface\n\n#### v1.1.0 — Multilingual + comparison\n- TR / EN language switch\n- Multi-method porosity spread (algorithm dependence on the same image)\n- Comparison-collage builder\n\n#### v1.0.0 — First public release\n- 14 segmentation algorithms (classical, blob/region, color-clustering, hybrid, modern DL: SAM 2 · CellPose)\n- Preloaded color palettes for 4 travertines (KT, GT, NT, PT)\n- 5 false-positive filters; preset save/load; K-means palette; pixel color picker; CSV/PNG export"
+_CHANGELOG_TR = "#### 🆕 v1.3.2 — Yaşlandırma grafiğinde ölçüte özgü eşikler\n- ΔE çubuk grafiği ve renk kutuları artık seçilen ölçütün eşiklerini kullanıyor (ΔE-2000: PT 0.8 / AT 1.8; ΔE-76: Mokrzycki & Tatol); v1.3.1'e kadar her ölçüte 1 / 3.5 / 5 / 10 çizgileri uygulanıyordu\n- Hızlı başlangıç ve standart metinleri güncellendi; yorum paragrafında p < 0.001 biçimi\n\n#### v1.3.1 — Renk yönetimi ve doğruluk ölçümü\n- Gömülü renk profili (ör. Generic RGB) yüklemede sRGB'ye çevriliyor; renk tabanlı yöntemler ve ΔE görüntüyü dışa aktaran yazılıma bağlı değil\n- Piksel boyutu artık ayarlanabilir (mm cinsinden alan ve boyut çıktıları); varsayılan 0,1277 mm (örnek görüntüler)\n- Elle işaretlemeye göre doğruluk betikleri (reproduce/select_gt_crops.py, evaluate_ground_truth.py) ve numune kırpma (crop_specimen.py)\n- benchmark_algorithms.py --palette none (paletsiz taşlar için)\n- 137 otomatik test\n\n#### v1.3.0 — Doğrulama ve tekrar-üretilebilirlik\n- ΔE artık doğrudan ortalama CIELAB'dan hesaplanıyor (v1.2'deki 8-bit sRGB yuvarlama hatası giderildi)\n- Metriğe özgü algısal eşikler: ΔE-2000 → PT/AT (Paravina 2015), ΔE-76 → Mokrzycki & Tatol; ΔE, 0'a değil algılanabilirlik eşiğine karşı sınanıyor\n- SAM 2 'prompted' modu (Sauvola adayları → SAM 2 sınırları); Cellpose 4 desteği\n- Sabit yüzdelikli yöntemler (DoG, Bottom-Hat, Frangi) için uyarı\n- 120 otomatik test (pytest + GitHub Actions); reproduce/ betikleri\n\n#### v1.2.1 — Web sürümü + örnek galerisi\n- Tarayıcıdan kullanım (Streamlit Cloud — kurulum gerektirmez)\n- Gömülü gerçek traverten örnekleri: KT · NT · PT · GT (öncesi/sonrası)\n- Yaşlandırma modunda tek tıkla örnek before/after çiftleri\n- 'Gömülü örnek numune' seçici (Gözenek ve Palet modları)\n- Arayüz adı: 'Gözenek ve Renk Tespit Aracı'\n\n#### v1.2.0 — Görsel yenileme + gözenek boyut dağılımı\n- Gözenek boyut dağılımı grafiği (MIP benzeri, logaritmik eksen, D50)\n- Güvenilirlik rozeti (gözeneklilik rejimine göre uyarı: %2 altı / %2–8 / %8 üstü)\n- Tema-duyarlı (açık/koyu) grafikler; tek tık ZIP indirme\n- Sıcak turuncu görsel kimlik, daha okunaklı arayüz\n\n#### v1.1.0 — Çok dillilik + karşılaştırma\n- TR / EN dil seçimi\n- Çoklu-yöntem porozite yayılımı (aynı görüntüde algoritma bağımlılığı)\n- Karşılaştırma-kolaj oluşturucu\n\n#### v1.0.0 — İlk halka açık sürüm\n- 14 segmentasyon algoritması (klasik eşikleme, blob/bölge, renk-clustering, hibrit, modern DL: SAM 2 · CellPose)\n- 4 traverten için ön-yüklü renk paletleri (KT, GT, NT, PT)\n- 5 yanlış-pozitif filtresi; preset kaydet/yükle; K-means palet; piksel renk seçici; CSV/PNG çıktı"
+_CHANGELOG_EN = "#### 🆕 v1.3.2 — Metric-specific thresholds in the aging chart\n- The ΔE bar chart and colour swatches now use the thresholds of the selected metric (ΔE-2000: PT 0.8 / AT 1.8; ΔE-76: Mokrzycki & Tatol); up to v1.3.1 the lines 1 / 3.5 / 5 / 10 were drawn for every metric\n- Quick-start and standards texts updated; p < 0.001 formatting in the interpretation paragraph\n\n#### v1.3.1 — Colour management and accuracy evaluation\n- Embedded colour profiles (e.g. Generic RGB) are converted to sRGB on loading, so colour-based methods and ΔE no longer depend on the software that exported the image\n- Adjustable pixel size (mm-based areas and sizes); default 0.1277 mm (bundled samples)\n- Accuracy scripts against manual annotation (reproduce/select_gt_crops.py, evaluate_ground_truth.py) and specimen cropping (crop_specimen.py)\n- benchmark_algorithms.py --palette none (stones without a palette)\n- 137 automated tests\n\n#### v1.3.0 — Validation and reproducibility\n- ΔE is now computed directly from the mean CIELAB (8-bit sRGB rounding error of v1.2 removed)\n- Metric-specific perceptual thresholds: ΔE-2000 → PT/AT (Paravina 2015), ΔE-76 → Mokrzycki & Tatol; ΔE tested against the perceptibility threshold, not against 0\n- SAM 2 'prompted' mode (Sauvola candidates → SAM 2 outlines); Cellpose 4 support\n- Warning for fixed-percentile detectors (DoG, Bottom-Hat, Frangi)\n- 120 automated tests (pytest + GitHub Actions); reproduce/ scripts\n\n#### v1.2.1 — Web release + sample gallery\n- Runs in the browser (Streamlit Cloud — no installation)\n- Bundled real travertine samples: KT · NT · PT · GT (before/after)\n- One-click sample before/after pairs in Aging mode\n- 'Built-in sample' picker (Pore & Palette modes)\n- Interface renamed to 'Pore & Color Detection Tool'\n\n#### v1.2.0 — Visual refresh + pore-size distribution\n- Pore-size distribution chart (MIP-like, log axis, D50)\n- Reliability badge (porosity-regime warning: <2% / 2–8% / >8%)\n- Theme-aware (light/dark) charts; one-click ZIP download\n- Warm orange visual identity, more readable interface\n\n#### v1.1.0 — Multilingual + comparison\n- TR / EN language switch\n- Multi-method porosity spread (algorithm dependence on the same image)\n- Comparison-collage builder\n\n#### v1.0.0 — First public release\n- 14 segmentation algorithms (classical, blob/region, color-clustering, hybrid, modern DL: SAM 2 · CellPose)\n- Preloaded color palettes for 4 travertines (KT, GT, NT, PT)\n- 5 false-positive filters; preset save/load; K-means palette; pixel color picker; CSV/PNG export"
 
 # Örnek (demo) görüntü yolu ve yükleyici (#3)
 _SAMPLE_IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sample_images', 'sample_travertine.png')
@@ -312,7 +312,7 @@ with _hc1:
 with _hc2:
     st.markdown(
         """<div style="text-align:right; padding-top:22px;">
-  <span style="background:#FFF1E6; color:#C75B12; border:1px solid #F2C9A6; border-radius:6px; padding:3px 10px; font-size:.85rem; font-weight:700; white-space:nowrap;">v1.3.1</span>
+  <span style="background:#FFF1E6; color:#C75B12; border:1px solid #F2C9A6; border-radius:6px; padding:3px 10px; font-size:.85rem; font-weight:700; white-space:nowrap;">v1.3.2</span>
   <span style="background:#FFF1E6; color:#C75B12; border:1px solid #F2C9A6; border-radius:6px; padding:3px 10px; font-size:.85rem; font-weight:700; white-space:nowrap;">MIT</span>
   <div style="color:#9aa0a6; font-size:.8rem; margin-top:6px;">__STAT__</div>
 </div>""".replace('__STAT__', _hdr_stat),
@@ -1647,16 +1647,16 @@ elif app_mode == 'aging' and ('aging_results' not in st.session_state or not st.
     ### What's next?
     - **Per-specimen table:** ΔL\*, Δa\*, Δb\*, ΔC\*, ΔH\*, ΔE for every sample
     - **Pre/Post color swatch grid** → visual comparison
-    - **Bar chart** → with perceptual threshold lines (1, 3.5, 5, 10)
-    - **4 paired tests** (ΔE, ΔL\*, Δa\*, Δb\*) — Shapiro-Wilk → t-test/Wilcoxon
+    - **Bar chart** → with metric-specific threshold lines (ΔE-2000: PT 0.8 / AT 1.8)
+    - **4 tests** — ΔE against the perceptibility threshold (one-sample) and ΔL\*, Δa\*, Δb\* (paired); Shapiro-Wilk → t-test/Wilcoxon
     - **95% CI + Cohen's d** — effect size interpretation (Negligible/Small/Medium/Large)
     - **Automatic scientific interpretation** (TR Discussion + EN paper-ready)
     - **CSV/JSON/Markdown/TXT** export
 
     ### Standards
-    This module complies with **TS EN 15886** (Natural stone, colour of surfaces) and 
-    **Sharma et al. 2005** (CIEDE2000). Damage class is automatically assigned via the 
-    Mokrzycki & Tatol (2011) classification.
+    This module complies with **EN 15886** (colour measurement of surfaces) and 
+    **Sharma et al. 2005** (CIEDE2000). The perceptual class is metric-specific: ΔE-2000 → 
+    PT 0.8 / AT 1.8 (Paravina et al. 2015); ΔE-76 → Mokrzycki & Tatol (2011); ΔE-94 → no class.
     """)
     else:
         _mi.markdown("""
@@ -1671,16 +1671,16 @@ elif app_mode == 'aging' and ('aging_results' not in st.session_state or not st.
     ### Sonra ne yapacaksın?
     - **Per-numune tablo:** ΔL\*, Δa\*, Δb\*, ΔC\*, ΔH\*, ΔE her örnekleme
     - **Pre/Post renk swatch grid** → görsel karşılaştırma
-    - **Bar chart** → perceptual eşik çizgileri (1, 3.5, 5, 10) ile birlikte
-    - **4 paired test** (ΔE, ΔL\*, Δa\*, Δb\*) — Shapiro-Wilk → t-test/Wilcoxon
+    - **Bar chart** → ölçüte özgü eşik çizgileri (ΔE-2000: PT 0.8 / AT 1.8)
+    - **4 test** — ΔE algılanabilirlik eşiğine karşı (tek örneklem), ΔL\*, Δa\*, Δb\* (eşleştirilmiş); Shapiro-Wilk → t-test/Wilcoxon
     - **95% CI + Cohen's d** — effect size yorumu (Negligible/Small/Medium/Large)
     - **Otomatik bilimsel yorum** (TR Tartışma + EN paper-ready)
     - **CSV/JSON/Markdown/TXT** export
 
     ### Standartlar
-    Bu modül **TS EN 15886** (Natural stone, colour of surfaces) ve **Sharma et al. 2005** 
-    (CIEDE2000) standartlarına uyumludur. Mokrzycki & Tatol (2011) sınıflandırması ile 
-    otomatik damage class belirler.
+    Bu modül **EN 15886** (yüzey rengi ölçümü) ve **Sharma et al. 2005** (CIEDE2000) ile 
+    uyumludur. Algı sınıfı ölçüte özgüdür: ΔE-2000 → PT 0.8 / AT 1.8 (Paravina ve ark. 2015); 
+    ΔE-76 → Mokrzycki & Tatol (2011); ΔE-94 → sınıf yok.
     """)
 
 elif app_mode == 'pore' and st.session_state.image_rgb is not None:
@@ -2457,6 +2457,21 @@ if app_mode == 'aging' and 'aging_results' in st.session_state and st.session_st
     with st.expander(T('aging_results_title'), expanded=True):
         ar = st.session_state.aging_results
         pairs = ar['pairs']
+        # v1.3.2: metric-specific perceptual bands (same thresholds as the interpretation engine)
+        _mid = '2000' if '2000' in str(ar['method']) else ('94' if '94' in str(ar['method']) else '76')
+        if _mid == '2000':
+            _bands = [(cs.DE2000_THRESHOLDS['PT'], '#22c55e', 'PT 0.8'), (cs.DE2000_THRESHOLDS['AT'], '#eab308', 'AT 1.8')]
+            _above = '#ef4444'
+        elif _mid == '76':
+            _bands = [(1.0, '#22c55e', '1'), (2.0, '#3b82f6', '2'), (3.5, '#eab308', '3.5'), (5.0, '#f97316', '5')]
+            _above = '#ef4444'
+        else:
+            _bands = []; _above = '#9ca3af'
+        def _dcol(v):
+            for _thr, _c, _ in _bands:
+                if v < _thr:
+                    return _c
+            return _above
         agg = ar['aggregate']
         n = agg['n']
         
@@ -2488,11 +2503,7 @@ if app_mode == 'aging' and 'aging_results' in st.session_state and st.session_st
         st.markdown(T('color_compare_section'))
         swatch_parts = ['<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">']
         for p in pairs:
-            if p['delta_e']<1: dc='#22c55e'
-            elif p['delta_e']<3.5: dc='#3b82f6'
-            elif p['delta_e']<5: dc='#eab308'
-            elif p['delta_e']<10: dc='#f97316'
-            else: dc='#ef4444'
+            dc = _dcol(p['delta_e'])
             pre_txt = '#fff' if p['pre_L']<55 else '#000'
             post_txt = '#fff' if p['post_L']<55 else '#000'
             swatch_parts.append(
@@ -2517,28 +2528,24 @@ if app_mode == 'aging' and 'aging_results' in st.session_state and st.session_st
         plot_w = bar_w - left_margin - right_margin
         bar_h_each = (bar_h - 50) / n
         svg = ['<svg width="' + str(bar_w) + '" height="' + str(bar_h) + '" xmlns="http://www.w3.org/2000/svg">']
-        for thresh, tcolor in [(1,'#22c55e'),(3.5,'#eab308'),(5,'#f97316'),(10,'#ef4444')]:
+        for thresh, tcolor, tlab in _bands:
             if thresh > max_de: continue
             x = left_margin + plot_w * thresh / max_de
             svg.append('<line x1="' + str(x) + '" y1="25" x2="' + str(x) + '" y2="' + str(bar_h-25) + '" stroke="' + tcolor + '" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>')
-            svg.append('<text x="' + str(x) + '" y="18" fill="' + tcolor + '" font-size="11" text-anchor="middle">' + str(thresh) + '</text>')
+            svg.append('<text x="' + str(x) + '" y="18" fill="' + tcolor + '" font-size="11" text-anchor="middle">' + tlab + '</text>')
         for i, p in enumerate(pairs):
             y = 35 + i * bar_h_each
             bar_len = plot_w * p['delta_e'] / max_de
-            if p['delta_e']<1: dc='#22c55e'
-            elif p['delta_e']<3.5: dc='#3b82f6'
-            elif p['delta_e']<5: dc='#eab308'
-            elif p['delta_e']<10: dc='#f97316'
-            else: dc='#ef4444'
-            svg.append('<text x="' + str(left_margin-10) + '" y="' + str(y+bar_h_each/2+4) + '" fill="#aaa" font-size="12" text-anchor="end">' + p['sample_name'][:20] + '</text>')
+            dc = _dcol(p['delta_e'])
+            svg.append('<text x="' + str(left_margin-10) + '" y="' + str(y+bar_h_each/2+4) + '" fill="currentColor" opacity="0.75" font-size="12" text-anchor="end">' + p['sample_name'][:20] + '</text>')
             svg.append('<rect x="' + str(left_margin) + '" y="' + str(y) + '" width="' + str(bar_len) + '" height="' + str(bar_h_each-8) + '" fill="' + dc + '" rx="3"/>')
-            svg.append('<text x="' + str(left_margin+bar_len+5) + '" y="' + str(y+bar_h_each/2+4) + '" fill="#fff" font-size="12" font-weight="600">' + '{:.2f}'.format(p['delta_e']) + '</text>')
+            svg.append('<text x="' + str(left_margin+bar_len+5) + '" y="' + str(y+bar_h_each/2+4) + '" fill="currentColor" font-size="12" font-weight="600">' + '{:.2f}'.format(p['delta_e']) + '</text>')
         mean_x = left_margin + plot_w * agg['delta_e']['mean'] / max_de
-        svg.append('<line x1="' + str(mean_x) + '" y1="25" x2="' + str(mean_x) + '" y2="' + str(bar_h-25) + '" stroke="#fff" stroke-width="2"/>')
-        svg.append('<text x="' + str(mean_x) + '" y="' + str(bar_h-5) + '" fill="#fff" font-size="12" text-anchor="middle">mean=' + '{:.2f}'.format(agg['delta_e']['mean']) + '</text>')
+        svg.append('<line x1="' + str(mean_x) + '" y1="25" x2="' + str(mean_x) + '" y2="' + str(bar_h-25) + '" stroke="currentColor" stroke-width="2"/>')
+        svg.append('<text x="' + str(mean_x) + '" y="' + str(bar_h-5) + '" fill="currentColor" font-size="12" text-anchor="middle">mean=' + '{:.2f}'.format(agg['delta_e']['mean']) + '</text>')
         svg.append('</svg>')
         st.markdown(''.join(svg), unsafe_allow_html=True)
-        st.caption(T('bar_chart_caption'))
+        st.caption(T('bar_chart_caption_' + _mid))
         
         # Istatistik 4 sekme
         st.markdown(T('stat_analysis_section'))
