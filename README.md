@@ -1,9 +1,10 @@
 # 🪨 Pore Segmentation Suite
 
 **An interactive pore-segmentation tool for travertines (and similar natural stones).**
-Version: 1.3.3 — 2026  
+Version: 1.3.4 — 2026  
 License: MIT  |  Developer: Murat SERT, AKU
 
+[![Paper](https://img.shields.io/badge/SoftwareX-10.1016%2Fj.softx.2026.103140-orange)](https://doi.org/10.1016/j.softx.2026.103140)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20416896.svg)](https://doi.org/10.5281/zenodo.20416896)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![cite](https://img.shields.io/badge/cite-CITATION.cff-blue)](CITATION.cff)
@@ -20,7 +21,13 @@ Use the app directly in your browser — no Python required:
 
 ---
 
-## ✨ What's new (v1.3.3)
+## ✨ What's new (v1.3.4)
+
+- **Software paper published**: *SoftwareX* 36 (2026) 103140, [doi:10.1016/j.softx.2026.103140](https://doi.org/10.1016/j.softx.2026.103140) (open access, CC BY 4.0). `CITATION.cff` now carries it as the preferred citation, and the citation block of the app shows the full reference and a BibTeX entry.
+- **English-named macOS launchers**: `setup.command` (first-time setup) and `start.command` (run the app) call the Turkish-named launchers, so they work the same way.
+- No change to the algorithms, defaults or results: every value of the paper is reproduced as with v1.3.3.
+
+### v1.3.3 — specimen masking, palettes in sRGB, accuracy statistics
 
 - **Aging mode, mean colour**: computed from **all specimen pixels** (previously a seeded random sample of 20 000 pixels) and with the **dark background connected to the image border excluded** (scanner lid, black cloth; `color_science.specimen_mask`). Both can be switched back in the interface and in the scripts (`--sample-size`, `--no-mask`).
 - **Interpretation engine**: the direction of a significant threshold test (below / above PT or AT) is read from the location estimate of the test that was run (mean for the t-test, Hodges–Lehmann pseudo-median for the Wilcoxon test), no longer from the arithmetic mean.
@@ -82,7 +89,7 @@ Library versions matter: MSER output differs between OpenCV 4.x and 5.x, so `req
 
 ### 1️⃣ First-time setup (only once)
 
-**macOS:** double-click `İlk Kurulum.command`.  
+**macOS:** double-click `setup.command` (same as `İlk Kurulum.command`).  
 (Use right-click → Open if needed — macOS may show a security warning.)
 
 **Windows:** skip this step — `Baslat.bat` installs everything automatically on first run.
@@ -91,7 +98,7 @@ This installs the required Python libraries automatically (~2-3 minutes).
 
 ### 2️⃣ Run the app
 
-**macOS:** double-click `Başlat.command` (or the `Gözenek Tespit.app` application).  
+**macOS:** double-click `start.command` (same as `Başlat.command`, or use the `Gözenek Tespit.app` application).  
 **Windows:** double-click `Baslat.bat`.
 
 Your browser opens automatically at `http://localhost:8501`.
@@ -115,6 +122,7 @@ macOS may block downloaded software. If you get a "cannot be opened" error:
 **Option 2 (permanent):** In Terminal:
 ```bash
 cd pore-segmentation-suite
+xattr -dr com.apple.quarantine start.command setup.command
 xattr -dr com.apple.quarantine Başlat.command
 xattr -dr com.apple.quarantine "İlk Kurulum.command"
 xattr -dr com.apple.quarantine "Gözenek Tespit.app"
@@ -185,9 +193,11 @@ pip3 install -r requirements-modern.txt
 
 ```
 pore-segmentation-suite/
-├── 🚀 Başlat.command            ← DOUBLE-CLICK TO LAUNCH (macOS)
+├── 🚀 start.command             ← DOUBLE-CLICK TO LAUNCH (macOS; calls Başlat.command)
+├── 🚀 Başlat.command            ← same launcher, Turkish name
 ├── 🚀 Baslat.bat                 ← DOUBLE-CLICK TO LAUNCH (Windows)
-├── 🛠️ İlk Kurulum.command       ← First-time setup
+├── 🛠️ setup.command             ← First-time setup (macOS; calls İlk Kurulum.command)
+├── 🛠️ İlk Kurulum.command       ← same setup script, Turkish name
 ├── 📱 Gözenek Tespit.app/        ← .app bundle (with icon)
 ├── 📄 pore_tuner_v2.py           ← Main Streamlit application
 ├── 📁 modules/                   ← Backend modules
@@ -228,7 +238,7 @@ pore-segmentation-suite/
 → In Terminal: `python3 -m pip install -r requirements.txt`
 
 **"Permission denied" (when double-clicking a .command file)**
-→ In Terminal: `chmod +x "Başlat.command"`
+→ In Terminal: `chmod +x start.command setup.command "Başlat.command" "İlk Kurulum.command"`
 
 **App opened but is slow**
 → Processing is slow on very large images (>3000 px). Downscale first: around 1500 px is ideal.
@@ -243,16 +253,33 @@ pore-segmentation-suite/
 
 ## 📚 Citation
 
-If you use this tool, please cite the software (the concept DOI always resolves to the latest version):
+If you use this tool, please cite the software paper:
 
 Sert, M. (2026). Pore Segmentation Suite: an open-source, interactive, multi-method tool
-for pore segmentation and colour characterization (v1.3.3) [Computer software]. Zenodo.
+for pore segmentation and colour characterization. *SoftwareX*, 36, 103140.
+https://doi.org/10.1016/j.softx.2026.103140
+
+and, to identify the exact version used, the software archive (the concept DOI always resolves to the latest version):
+
+Sert, M. (2026). Pore Segmentation Suite (v1.3.4) [Computer software]. Zenodo.
 https://doi.org/10.5281/zenodo.20416896
 
-Software paper: Sert, M. Pore Segmentation Suite: an open-source, interactive, multi-method tool
-for pore segmentation and colour characterization. SoftwareX (under review).
+```bibtex
+@article{sert2026_softx,
+  author  = {Sert, Murat},
+  title   = {Pore Segmentation Suite: an open-source, interactive, multi-method tool for pore segmentation and colour characterization},
+  journal = {SoftwareX},
+  volume  = {36},
+  pages   = {103140},
+  year    = {2026},
+  doi     = {10.1016/j.softx.2026.103140}
+}
+```
 
-The `CITATION.cff` file is automatically recognized by GitHub.
+The images, manual pore annotations and script outputs of the paper are archived at
+https://doi.org/10.5281/zenodo.22990481 (CC BY 4.0).
+
+The `CITATION.cff` file is automatically recognized by GitHub ("Cite this repository").
 
 ---
 

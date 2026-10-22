@@ -41,6 +41,6 @@ echo "════════════════════════�
 echo "  ✓ Kurulum tamamlandı!                        "
 echo "════════════════════════════════════════════════"
 echo ""
-echo "  Artık 'Başlat.command' dosyasına çift tıkla."
+echo "  Artık 'Başlat.command' (veya 'start.command') dosyasına çift tıkla."
 echo ""
 read -p "Pencereyi kapatmak için Enter..."

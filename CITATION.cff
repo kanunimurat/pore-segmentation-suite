@@ -14,8 +14,8 @@ authors:
     affiliation: "Afyon Kocatepe University, Marble and Natural Stone Technologies Application and Research Center"
     email: msert@aku.edu.tr
     orcid: "https://orcid.org/0000-0001-6595-1681"
-version: 1.3.3
-date-released: "2026-09-27"
+version: 1.3.4
+date-released: "2026-10-22"
 license: MIT
 repository-code: "https://github.com/kanunimurat/pore-segmentation-suite"
 url: "https://pore-and-color-segmentation-suite.streamlit.app"
@@ -29,3 +29,32 @@ keywords:
   - cultural heritage
   - reproducibility
   - SAM 2
+  - Streamlit
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.20416896"
+    description: "Concept DOI of the software (all versions, resolves to the latest)"
+  - type: doi
+    value: "10.1016/j.softx.2026.103140"
+    description: "Software paper in SoftwareX"
+  - type: doi
+    value: "10.5281/zenodo.22990481"
+    description: "Dataset: surface scans, manual pore annotations and script outputs"
+preferred-citation:
+  type: article
+  title: "Pore Segmentation Suite: an open-source, interactive, multi-method tool for pore segmentation and colour characterization"
+  authors:
+    - family-names: Sert
+      given-names: Murat
+      affiliation: "Afyon Kocatepe University, Marble and Natural Stone Technologies Application and Research Center"
+      orcid: "https://orcid.org/0000-0001-6595-1681"
+  journal: "SoftwareX"
+  volume: 36
+  start: 103140
+  year: 2026
+  month: 10
+  doi: "10.1016/j.softx.2026.103140"
+  url: "https://doi.org/10.1016/j.softx.2026.103140"
+  publisher:
+    name: "Elsevier"
+  license: CC-BY-4.0

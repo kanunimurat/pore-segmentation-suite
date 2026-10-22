@@ -2,6 +2,18 @@
 
 Sürüm geçmişi — [Semantic Versioning](https://semver.org/lang/tr/).
 
+## [1.3.4] — 2026-10-22 — Software paper published
+
+### Changed
+- **Citation**: the software paper is published in *SoftwareX* 36 (2026) 103140, doi:10.1016/j.softx.2026.103140. `CITATION.cff` gains a `preferred-citation` (article) and `identifiers` (concept DOI, paper, dataset); the citation block of the app lists the paper first and adds a BibTeX `@article` entry; README citation section rewritten.
+- `Başlat.command` header no longer shows an outdated version number (v1.2).
+
+### Added
+- `setup.command` and `start.command`: English-named macOS launchers that call `İlk Kurulum.command` and `Başlat.command`.
+
+### Unchanged
+- Algorithms, defaults, palettes and reproduce/ scripts are identical to v1.3.3; all results of the paper are reproduced unchanged.
+
 ## [1.3.3] — 2026-09-27 — Specimen masking, palettes in sRGB, accuracy statistics
 
 ### Fixed
